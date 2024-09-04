@@ -1,68 +1,25 @@
-import os
+from diffusers import DiffusionPipeline
 import torch
-from PIL import Image
-from openai import OpenAI
-from transformers import pipeline
-from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, StableDiffusionPipeline
+import argparse
+import yaml
+import os
 
 
-client = OpenAI(
-    # This is the default and can be omitted
-    api_key='sk-proj-qDQrC201Ia6GTICngFmbT3BlbkFJPWGyoLDdUOYMKCgIBS8D',
-)
 
-controlnet_model = os.path.join("models", "control_v11p_sd15_normalbae.pth")
+loop = 1
+#model_path = os.path.join("output", "agent_fox", (loop))
+pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
+pipe.to("cuda")
+pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
 
-# Enhance the description using GPT model
-def enhance_description(prompt):
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo-0125",
-        messages=[
-            {"role": "system", "content": "You re-write the text with details in a way that it can be passed to a model to create an Image."},
-            {"role": "user", "content": prompt}
-        ],
-    )
-    return response.choices[0].message.content
+prompt_postfix = " sitting on a rocket"
+image_postfix = prompt_postfix.replace(" ", "_")
 
+# create folder
+output_folder = f"generated_images/agent_fox"
+os.makedirs(output_folder, exist_ok= True)
 
-def generate_base_image(description):
-    # Load the Stable Diffusion model
-    model_id = "CompVis/stable-diffusion-v1-4"
-    pipe = StableDiffusionPipeline.from_pretrained(model_id)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    pipe = pipe.to(device)
-    
-    # Generate the base image
-    image = pipe(description).images[0]
-    return image
-
-
-# Generate an image using ControlNet
-def generate_image(description, base_image):
-    # Load ControlNet and Stable Diffusion models
-    control_model = ControlNetModel.from_pretrained("lllyasviel/control_v11p_sd15_normalbae")
-    pipe = StableDiffusionControlNetPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", controlnet=control_model)
-    
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    pipe = pipe.to(device)
-    
-    # Generate the image
-    image = pipe(prompt=description, image=base_image).images[0]
-    return image
-
-if __name__ == "__main__":
-    # User input prompt
-    user_prompt = "A person drinking coffee in his living room. The person is sitting on a gaming chair."
-    
-    # Enhance the description using GPT model
-    detailed_description = enhance_description(user_prompt)
-    print("Enhanced Description:", detailed_description)
-
-    # Generate the base image
-    base_image = generate_base_image(detailed_description)
-    base_image.save("base_futuristic_city.png")
-    
-    # Generate and save the image
-    generated_image = generate_image(detailed_description, base_image)
-    generated_image.save("enhanced_futuristic_city.png")
-    generated_image.show()
+# remember to use the place holader here
+prompt = f"A photo of <$V$> {prompt_postfix}."
+image = pipe(prompt, num_inference_steps=35, guidance_scale=7.5).images[0]
+image.save("generated_images/agent_fox/{image_postfix}.png")
