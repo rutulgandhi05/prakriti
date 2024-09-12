@@ -48,7 +48,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 
 
-def train_loop(args, loop_num: int, vis=True, start_from=0):
+def train_loop(args, loop_num: int, vis=False, start_from=0):
     """
     train and load the trained diffusion model, save the images and model file.
     """
