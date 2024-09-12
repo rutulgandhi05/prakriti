@@ -17,5 +17,4 @@ tqdm==4.66.1
 transformers==4.35.2
 wandb==0.16.0
 xformers==0.0.22
-git+https://github.com/huggingface/diffusers.git
 git+https://github.com/huggingface/datasets.git
