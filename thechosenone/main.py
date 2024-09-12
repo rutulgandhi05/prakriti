@@ -26,8 +26,8 @@ from tqdm.auto import tqdm
 from transformers import AutoTokenizer, PretrainedConfig, CLIPTextModel, CLIPTokenizer
 import diffusers
 from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionXLPipeline, UNet2DConditionModel
-from diffusers.loaders import LoraLoaderMixin
-from diffusers.models.lora import LoRALinearLayer, text_encoder_lora_state_dict
+from diffusers.loaders import LoraLoaderMixin, text_encoder_lora_state_dict
+from diffusers.models.lora import LoRALinearLayer
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import compute_snr
 from diffusers.utils import check_min_version, is_wandb_available
@@ -225,7 +225,7 @@ def kmeans_2D_visualize(args, centers, data, labels, loop_num):
     for i in range(args.kmeans_center):
         cluster_points = np.array(embeddings_2d[labels==i])
         plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster {i + 1}", s=100)
-    plt.savefig(f"kmeans_results/{args.character_name}_KMeans_res_Loop_{loop_num}.png")
+    plt.savefig(f"data/kmeans_results/{args.character_name}_KMeans_res_Loop_{loop_num}.png")
     
         
 def compare_features(image_features, cluster_centroid):

@@ -14,7 +14,7 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-args = config_2_args("config/theChosenOne.yaml")
+args = config_2_args("theChosenOne/config/theChosenOne.yaml")
 
 loop = 1
 model_path = os.path.join(args.output_dir, args.character_name, str(loop))
@@ -26,7 +26,7 @@ prompt_postfix = " sitting on a rocket."
 image_postfix = prompt_postfix.replace(" ", "_")
 
 # create folder
-output_folder = f"./inference_results/{args.character_name}"
+output_folder = f"data/inference_results/{args.character_name}"
 os.makedirs(output_folder)
 
 # remember to use the place holader here

@@ -1,11 +1,11 @@
 # General
 pytorch: 2.0.1-cuda11.7-cudnn8-runtime
-gpus: a100:8
-max-time: 14-0
+gpus: a100:1
+max-time: 3-0
 name: thechosenone
 output: output_thechosenone.txt
 mail-type: ALL
-mail-user: rutul.gandhi@uni-ulm.de
+mail-user: rutul.gandhi@uni-ulm.des
 
 # Dependencies
 requirements: thechosenone/requirements.txt
