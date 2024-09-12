@@ -166,4 +166,4 @@ blender/
 commands.txt
 config.ini
 test.py
-output_thechosenone.txt
+output_*
