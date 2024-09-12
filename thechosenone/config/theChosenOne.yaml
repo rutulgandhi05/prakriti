@@ -1,7 +1,7 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 # 
-inference_prompt: A photo of a man in mid 20s, wearing a medieval dress.
+inference_prompt: A photo of a man in 20s, wearing a medieval dress.
 learnable_property: object
 initializer_token: cha
 placeholder_token: <$V$>
