@@ -1,1 +1,1 @@
-python thechosenone\main.py
+python thechosenone/main.py
