@@ -1,7 +1,6 @@
 accelerate==0.24.1
 bitsandbytes==0.41.2.post2
 datasets==2.15.0
-diffusers[torch]
 huggingface_hub==0.19.4
 matplotlib==3.8.2
 numpy==1.26.2
@@ -19,3 +18,4 @@ tqdm==4.66.1
 transformers==4.35.2
 wandb==0.16.0
 xformers==0.0.22
+diffusers==0.23.1
