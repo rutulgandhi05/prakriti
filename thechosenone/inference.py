@@ -26,7 +26,7 @@ prompt_postfix = " sitting on a rocket."
 image_postfix = prompt_postfix.replace(" ", "_")
 
 # create folder
-output_folder = f"data/inference_results/{args.character_name}"
+output_folder = f"data/{args.character_name}/inference_results/"
 os.makedirs(output_folder)
 
 # remember to use the place holader here
