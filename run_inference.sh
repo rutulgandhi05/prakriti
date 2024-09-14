@@ -1,1 +1,1 @@
-python thechosenone/infrence.py
+python thechosenone/inference.py
