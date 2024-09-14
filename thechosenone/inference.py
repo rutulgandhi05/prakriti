@@ -16,7 +16,7 @@ def config_2_args(path):
 
 args = config_2_args("thechosenone/config/chaprot.yaml")
 
-loop = 1
+loop = 0
 model_path = os.path.join(args.output_dir, args.character_name, str(loop))
 pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
 pipe.to("cuda")
