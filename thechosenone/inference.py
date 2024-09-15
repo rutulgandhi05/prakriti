@@ -22,7 +22,7 @@ pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
 pipe.to("cuda")
 pipe.load_lora_weights(os.path.join(model_path, f"checkpoint-{args.checkpointing_steps * args.num_train_epochs}"))
 
-prompt_postfix = " sitting on a rocket."
+prompt_postfix = " sitting on a rocket"
 image_postfix = prompt_postfix.replace(" ", "_")
 
 # create folder
