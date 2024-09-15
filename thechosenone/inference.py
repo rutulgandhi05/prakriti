@@ -14,7 +14,7 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-args = config_2_args("thechosenone/config/Kaelan_Voss.yaml")
+args = config_2_args("thechosenone/config/klvrtdnxt.yaml")
 
 loop = 0
 model_path = os.path.join(args.output_dir, args.character_name, str(loop))
