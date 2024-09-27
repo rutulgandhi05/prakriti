@@ -20,10 +20,13 @@ class Quest:
 
 
     def start(self):
-        """Marks the quest as started and updates its status."""
-
+        """
+        Marks the quest as started and updates its status.
+        """
         self.status = "in_progress"
+        self.add_to_db()
         print(f"Quest '{self.name}' started!")
+
 
     def update_progress(self, game_state):
         """
@@ -48,6 +51,8 @@ class Quest:
         else:
             print(f"Current objective not completed yet. Objective: {current_objective['description']}")
 
+        self.add_to_db()
+
 
     def check_objective_completion(self, objective, game_state):
         """
@@ -62,9 +67,25 @@ class Quest:
 
 
     def complete(self):
-        """Marks the quest as completed and updates its status."""
+        """
+        Marks the quest as completed and updates its status.
+        """
         self.status = "completed"
         print(f"Quest '{self.name}' completed!")
+        self.add_to_db()
+
+
+    def add_to_db(self):
+        db = DatabaseManager()
+
+        query = '''
+            INSERT OR REPLACE INTO quest (name, description, objectives, status)
+            VALUES (?, ?, ?, ?);
+        '''
+        data = (self.name, self.description, json.dumps(self.objectives), self.status)
+        
+        db.cursor.execute(query, data)
+
 
     def get_status(self):
         """Returns the current status of the quest."""
@@ -75,38 +96,4 @@ class Quest:
         if self.status == "in_progress":
             return self.objectives[self.current_objective_index]
         return None 
-
-
-    def add_to_db(self):
-        db = DatabaseManager()
-
-        query = '''
-            INSERT OR REPLACE INTO quest (name, description, objectives, status)
-            VALUES (?, ?, ?, ?);
-        '''
-
-        data = (self.name, self.description, json.dumps(self.objectives), self.status)
-        
-        db.cursor.execute(query, data)
-
-    
-    def start_quest(self, quest_id):
-
-        """ Start a quest based on its ID """
-
-        quest = next((quest for quest in self.quests if quest.quest_id == quest_id), None)
-        if quest:
-            quest.start()
-        else:
-            print("Quest not found.")
-
-
-    
-    def check_quest_progress(self, quest_id, game_state):
-        """Check the progress of a quest."""
-        quest = next((quest for quest in self.quests if quest.quest_id == quest_id), None)
-        if quest:
-            quest.update_progress(game_state)
-        else:
-            print("Quest not found.")
         

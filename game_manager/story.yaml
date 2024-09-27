@@ -1,8 +1,11 @@
 setting: The story is set in the medieval kingdom of Eridell, a once-prosperous land now fractured by internal conflict, treacherous plots, and an ancient curse. The player, a wandering adventurer, arrives in Blackmoor, a town known for its dangerous forests and looming mountains, and quickly gets caught up in a series of quests that could determine the fate of the realm.
 
+player:
+  name: "Alex the Brave"
+  backstory: "Once a soldier, now seeking redemption in a war-torn land."
 
 npcs:
-  1:
+  captian:
     name: Captain Merrick
     profession: Guard Captain of Blackmoor
     temperament: Brave, skeptical of magic, loyal to the town.
@@ -11,7 +14,7 @@ npcs:
     goals: ["Protect the townspeople.", "Find a rational explanation for the disappearances."]
     relationship_level: Neutral (Can improve if the player helps him uncover the truth).
     personality_traits: Practical, courageous, authoritative. Respects actions over words and dislikes indecision.
-  2:
+  lira:
     name: Lira 
     profession: Herbalist and local healer
     temperament: Mysterious, cautious, secretive.
@@ -20,7 +23,7 @@ npcs:
     goals: ["Keep her true knowledge of the curse secret unless absolutely necessary.", "Help the player uncover the truth, but only if they approach her respectfully."]
     relationship_level: Neutral, with the potential to become an ally if the player seeks her wisdom instead of using force.
     personality_traits: Knowledgeable, patient, secretive. Prefers to work behind the scenes and values subtlety and respect.
-  3:
+  calen:
     name: Old Man Calen 
     profession: Hermit (Former Scholar)
     temperament: Erratic, paranoid, insightful.
@@ -29,7 +32,7 @@ npcs:
     goals: ["Warn the player about the curse.", "Get the player to believe his story about the Witch of the Woods.", "Survive whatever is coming."]
     relationship_level:  Initially low, but can improve if the player listens to his warnings and helps him.
     personality_traits: Knowledgeable, patient, secretive. Prefers to work behind the scenes and values subtlety and respect.
-  4:
+  mayor:
     name: Mayor Balthas
     profession: Mayor of Blackmoor
     temperament: Charismatic, controlling, manipulative.
@@ -38,7 +41,7 @@ npcs:
     goals: ["Maintain his power over the town.", "Conceal the truth about the demon pact.", "Ensure the player doesn’t uncover his secret."]
     relationship_level:  Initially positive (sees the player as a tool to manipulate), but will turn hostile if the player uncovers his secret.
     personality_traits: Manipulative, charismatic, ambitious. Uses charm to get what he wants but turns vicious when his control is threatened.
-  5:
+  demon:
     name: The Demon
     profession: Demon bound to an ancient pact
     temperament: Malevolent, cunning, manipulative.
@@ -47,7 +50,7 @@ npcs:
     goals: ["Break free from its ancient bonds.", "Corrupt Blackmoor and spread its influence throughout the kingdom.", "Manipulate the player into either serving it or allowing it to escape."]
     relationship_level: Neutral but can become an ally if the player chooses to strike a deal with it.
     personality_traits: Cunning, manipulative, patient. It plays the long game, knowing that its influence grows with every corrupted soul.
-  6:
+  granthor:
     name: Granthor
     profession: Blacksmith of Blackmoor
     temperament: Loyal, stubborn, hardworking.

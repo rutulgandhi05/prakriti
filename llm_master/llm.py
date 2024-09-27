@@ -1,9 +1,7 @@
 import torch
 import yaml
-import json
-import logging
 import argparse
-import transformers
+import spacy
 
 from huggingface_hub import login
 from datasets import load_dataset
@@ -11,9 +9,15 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments,
 from peft import get_peft_model, LoraConfig, TaskType
 
 torch.cuda.empty_cache()
-
+nlp = spacy.load("en_core_web_sm")
+   
 class LLM():
     def __init__(self, args):
+        """
+        Initializes the LLM with a specified model and tokenizer from Hugging Face.
+        It also logs into Hugging Face using the provided token.
+        """
+
         self.args = self.config_2_args("llm_master/config.yaml")
         login(token=self.args.hf_login_token)
 
@@ -27,6 +31,10 @@ class LLM():
 
 
     def config_2_args(self, path):
+        """ 
+        Parses configuration YAML to command-line arguments.
+        """
+       
         with open(path, 'r') as file:
             yaml_data = yaml.safe_load(file)
         parser = argparse.ArgumentParser(description="Generate args from config")
@@ -38,7 +46,57 @@ class LLM():
         return args
     
 
+    def parse_player_input(self, player_input):
+        """
+        Use NLP to understand and classify the player's input.
+        :param player_input: The player's input as a string.
+        :return: Parsed NLP information, including actions and entities.
+        """
+        doc = nlp(player_input)
+
+        # Identify important actions (verbs) and entities (nouns, places, characters)
+        actions = [token.lemma_ for token in doc if token.pos_ == "VERB"]
+        entities = [ent.text for ent in doc.ents]
+
+        return {"actions": actions, "entities": entities}
+
+
+    def generate_prompt(self, quest_name, player_action, player_state, quest_background):
+        """
+        Generates a comprehensive prompt for the LLM based on the player's action, the quest's background, and the current state.
+        :param quest_name: Name of the current quest.
+        :param player_action: The player's input or action.
+        :param player_state: Dictionary representing the player's current state (e.g., inventory, health, allies).
+        :param quest_background: Description of the quest's background and progress.
+        :return: A structured prompt for the LLM.
+        """
+        # Parse the player's action using NLP
+        parsed_input = self.parse_player_input(player_action)
+
+        # Generate player status
+        player_status = f"Player is currently {player_state['status']} with {player_state['inventory']} in their possession. They are interacting with {player_state['npcs']}."
+
+        # Generate quest context
+        quest_context = f"Quest: {quest_name}. {quest_background} The player has decided to {player_action}."
+
+        # Structured prompt to guide the LLM
+        prompt = (
+            f"{quest_context}\n"
+            f"Player status: {player_status}\n"
+            f"Actions mentioned: {parsed_input['actions']}\n"
+            f"Entities mentioned: {parsed_input['entities']}\n"
+            "Please continue the story based on the player's action."
+        )
+    
+        return prompt
+
+
     def inference(self, prompt):
+        """
+        Generate text based on the provided prompt using the LLM.
+        :param prompt: Text input to generate response.
+        :return: Generated text response.
+        """
 
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
 
@@ -55,6 +113,23 @@ class LLM():
         output_text = self.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
 
         return output_text
+    
+
+    def generate_response(self, quest_name, player_action, player_state, quest_background):
+        """
+        Generate a story response from the LLM based on the player's action, the quest background, and current state.
+        :param quest_name: The name of the current quest.
+        :param player_action: The player's input or action.
+        :param player_state: Dictionary representing the player's current state.
+        :param quest_background: Description of the quest's background.
+        :return: The LLM's generated response for the story.
+        """
+        # Generate a smart prompt that includes quest context, player state, and action
+        prompt = self.generate_prompt(quest_name, player_action, player_state, quest_background)
+
+        # Generate a response using the LLM based on the prompt
+        response = self.inference(prompt)
+        return response
     
     
     def train(self):

@@ -18,20 +18,28 @@ class NPC:
         self.personality_traits = personality_traits
         self.relationship_level = relationship_level # Track relationship level with the player (e.g., positive, negative)
 
+
     def remember_interaction(self, player_action, npc_response):
-        # Store the player's action and the NPC's response
+        """
+        Store the player's action and the NPC's response in memory.
+        """
         interaction = {
             "player_action": player_action,
             "npc_response": npc_response
         }
         self.memory.append(interaction)
+        
+        # Update the database with the latest memory state
+        self.add_to_db()
 
 
     def update_emotion(self, new_state):
-        """Update the NPC's emotional state and track its history."""
+        """
+        Update the NPC's emotional state and track its history.
+        """
         self.emotion_history.append(self.current_state)
         self.current_state = new_state
-
+        self.add_to_db()
 
     def add_goal(self, goal):
         """
@@ -39,7 +47,7 @@ class NPC:
         :param goal: The goal the NPC wants to achieve
         """
         self.goals.append(goal)
-        
+        self.add_to_db()
 
     def modify_relationship(self, change):
         """
@@ -47,7 +55,7 @@ class NPC:
         :param change: The change to apply to the relationship level (positive or negative)
         """
         self.relationship_level += change
-
+        self.add_to_db()
 
     def get_memory_context(self):
         # Generate a context string from the NPC's memory to pass to the LLM
@@ -72,17 +80,6 @@ class NPC:
         
         db.cursor.execute(query, data)
     
-
-    def interact_with_npc(self, npc_id):
-        """Interact with a specific NPC and generate dialogue."""
-        npc = next((npc for npc in self.npcs if npc.id == npc_id), None)
-        if npc:
-            prompt = f"{npc.name} meets {self.player['name']}."
-            response = self.llm.inference(prompt)
-            npc.remember_interaction(f"Player met {npc.name}", response)
-            print(response)
-        else:
-            print("NPC not found.")
 
 
     def __str__(self):
