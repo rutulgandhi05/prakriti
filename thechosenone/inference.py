@@ -14,7 +14,7 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-def generate_game_image(character_name, prompt_postfix, config_path="thechosenone/config/klvrtdnxt.yaml", loop=0):
+def generate_game_image(prompt, config_path="thechosenone/config/klvrtdnxt.yaml", loop=0):
     """
     Generate an image using Stable Diffusion for a specific character and quest.
     :param character_name: The name of the character or NPC for the prompt.
@@ -27,7 +27,7 @@ def generate_game_image(character_name, prompt_postfix, config_path="thechosenon
     args = config_2_args(config_path)
     
     # Set model path and load pipeline with LoRA weights
-    model_path = os.path.join(args['output_dir'], character_name, str(loop))
+    model_path = args["model_path"]
     pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe.to("cuda")
     
@@ -35,12 +35,8 @@ def generate_game_image(character_name, prompt_postfix, config_path="thechosenon
     checkpoint_path = os.path.join(model_path, f"checkpoint-{args['checkpointing_steps'] * args['num_train_epochs']}")
     pipe.load_lora_weights(checkpoint_path)
     
-    # Generate the prompt
-    prompt = f"A photo of {args['placeholder_token']} {prompt_postfix}."
-    image_postfix = prompt_postfix.replace(" ", "_")
-    
     # Set up output directory for the images
-    output_folder = f"data/{character_name}/inference_results/"
+    output_folder = args["output_folder"]
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     

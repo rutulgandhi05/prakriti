@@ -1,66 +1,57 @@
 import streamlit as st
-from story_manager import StoryManager
+from game_manager.story_manager import StoryManager
 
-# Initialize StoryManager
+# Initialize StoryManager and Stable Diffusion Image Generator
 story_manager = StoryManager(story_file="config.yaml")
 
-# Streamlit app title
-st.title("Eridell: A Quest Through Time")
+# Streamlit UI Setup
+st.title("Prakriti")
+st.subheader("Embark on an epic quest in the kingdom of Eridell!")
 
-# Initialize game state in session
-if 'game_started' not in st.session_state:
-    st.session_state['game_started'] = False
-    st.session_state['current_quest'] = 1  # Start with Quest 1
+# Initialize session state for current quest if not already set
+if "current_quest" not in st.session_state:
+    st.session_state['current_quest'] = 0  # Start at Quest 1
 
-# Button to start the game and display intro
-if not st.session_state['game_started']:
+# Function to display the game intro and move to Quest 1
+def start_game():
+    st.session_state['current_quest'] = 1  # Set to Quest 1 after intro
+    intro_text = story_manager.start_intro()  # Show intro dialogue
+    st.write(intro_text)
+
+
+def handle_quest(quest_id):
+    quest = story_manager.get_quest(quest_id)
+    
+    # Repeatedly ask for player input until quest is complete
+    while not st.session_state['quest_complete']:
+        player_input = st.text_input(f"Quest {quest_id}: What will you do?", key=f"input_{quest_id}")
+        
+        if st.button(f"Submit", key=f"submit_{quest_id}"):
+            # Process the player move and get quest response
+            quest_data = story_manager.play_quest(quest_id, player_input)
+            
+            for data in quest_data:
+                st.image(data.image)  # Display the generated image
+                st.write(data.dialogue)  # Display the LLM response
+            
+            # Check if the quest is complete
+            if quest.status == "completed":
+                st.write(f"Quest {quest_id} is complete!")
+                st.session_state['quest_complete'] = True
+                if quest_id < 3:  # Move to the next quest if it's not the final quest
+                    st.session_state['current_quest'] += 1
+                    st.session_state['quest_complete'] = False  # Reset for next quest
+                else:
+                    st.write("Congratulations! You have completed all the quests.")
+                    st.session_state['current_quest'] = 0  # Reset to the intro after completion
+
+
+
+# Start the game with a Play button
+if st.session_state['current_quest'] == 0:
     if st.button("Play"):
-        st.write(story_manager.start_intro())
-        st.session_state['game_started'] = True
+        start_game()
 
-# Once the game is started, automatically start quests
-if st.session_state['game_started']:
-    # Check which quest is currently active
-    current_quest = st.session_state['current_quest']
-    
-    # Automatically start the next quest in sequence
-    if current_quest == 1:
-        st.write("Starting Quest 1: The Blackmoor Curse")
-        story_manager.play_quest(1)
-        image_path = "./outputs/quest_1/generated_image.png"
-        st.image(image_path, caption="Quest 1: The Blackmoor Curse")
-        st.session_state['current_quest'] = 2  # Move to the next quest
-    
-    elif current_quest == 2:
-        st.write("Starting Quest 2: The Mayor’s Secret")
-        story_manager.play_quest(2)
-        image_path = "./outputs/quest_2/generated_image.png"
-        st.image(image_path, caption="Quest 2: The Mayor’s Secret")
-        st.session_state['current_quest'] = 3  # Move to the final quest
-    
-    elif current_quest == 3:
-        st.write("Starting Quest 3: The Demon’s Reckoning")
-        story_manager.play_quest(3)
-        image_path = "./outputs/quest_3/generated_image.png"
-        st.image(image_path, caption="Quest 3: The Demon’s Reckoning")
-        st.session_state['current_quest'] = None  # Mark the game as finished
-    
-    # Display the input box for player actions
-    player_input = st.text_input("Enter your action:", "")
-    
-    if st.button("Submit Action"):
-        # Use the player's input and pass it to the LLM for response
-        if player_input:
-            current_quest_name = f"Quest {current_quest}"
-            llm_response = story_manager.llm.generate_response(current_quest_name, player_input)
-            
-            # Generate and display updated visual based on LLM response
-            story_manager.generate_quest_visual(story_manager.quests[current_quest-1], llm_response)
-            image_path = f"./outputs/quest_{current_quest}/generated_image.png"            
-            
-            st.image(image_path, caption=f"Updated Visual for {current_quest_name}")
-            st.write(f"LLM Response: {llm_response}")
-    
-    # End of the game after Quest 3
-    if current_quest is None:
-        st.write("All quests completed! The adventure has ended.")
+# Run the quests sequentially
+elif st.session_state['current_quest'] > 0:
+    handle_quest(st.session_state['current_quest'])

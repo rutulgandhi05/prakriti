@@ -12,7 +12,7 @@ torch.cuda.empty_cache()
 nlp = spacy.load("en_core_web_sm")
    
 class LLM():
-    def __init__(self, args):
+    def __init__(self):
         """
         Initializes the LLM with a specified model and tokenizer from Hugging Face.
         It also logs into Hugging Face using the provided token.
@@ -61,34 +61,6 @@ class LLM():
         return {"actions": actions, "entities": entities}
 
 
-    def generate_prompt(self, quest_name, player_action, player_state, quest_background):
-        """
-        Generates a comprehensive prompt for the LLM based on the player's action, the quest's background, and the current state.
-        :param quest_name: Name of the current quest.
-        :param player_action: The player's input or action.
-        :param player_state: Dictionary representing the player's current state (e.g., inventory, health, allies).
-        :param quest_background: Description of the quest's background and progress.
-        :return: A structured prompt for the LLM.
-        """
-        # Parse the player's action using NLP
-        parsed_input = self.parse_player_input(player_action)
-
-        # Generate player status
-        player_status = f"Player is currently {player_state['status']} with {player_state['inventory']} in their possession. They are interacting with {player_state['npcs']}."
-
-        # Generate quest context
-        quest_context = f"Quest: {quest_name}. {quest_background} The player has decided to {player_action}."
-
-        # Structured prompt to guide the LLM
-        prompt = (
-            f"{quest_context}\n"
-            f"Player status: {player_status}\n"
-            f"Actions mentioned: {parsed_input['actions']}\n"
-            f"Entities mentioned: {parsed_input['entities']}\n"
-            "Please continue the story based on the player's action."
-        )
-    
-        return prompt
 
 
     def inference(self, prompt):

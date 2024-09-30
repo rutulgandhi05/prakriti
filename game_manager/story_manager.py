@@ -2,9 +2,10 @@ import yaml
 from llm_master.llm import LLM
 from npc_handler import NPC
 from quest_handler import Quest
+from player_handler import Player
 from db_master.db_manager import DatabaseManager
 from thechosenone.inference import generate_game_image
-from PIL import Image, ImageDraw, ImageFont 
+from PIL import Image, ImageDraw, ImageFont
 
 class StoryManager:
     def __init__(self, story_file='story.yaml'):
@@ -12,11 +13,12 @@ class StoryManager:
         Initializes the story manager by loading story and NPC details from a YAML file.
         """
         self.db = DatabaseManager()
+        self.llm = LLM()
         self.story = self.load_story(story_file)
         self.player = None  # Placeholder for player character
         self.npcs = []  # List to hold NPC objects
         self.quests = []  # List to hold quests
-        self.llm = LLM(args=None)
+        self.player = None
 
 
     def load_story(self, file_path):
@@ -35,10 +37,13 @@ class StoryManager:
     def setup_player(self):
         """Initialize the player character."""
         player_data = self.story.get('player', {})
-        player_name = player_data.get('name', 'Unknown Hero')
-        player_backstory = player_data.get('backstory', 'A mysterious figure...')
-        self.player = {'name': player_name, 'backstory': player_backstory}
-        print(f"Welcome, {player_name}! {player_backstory}")
+        name = player_data.get('name', 'Unknown Hero')
+        backstory = player_data.get('backstory', 'A mysterious figure...')
+        profession = player_data.get('profession', 'A mysterious figure...')
+        current_state = player_data.get('current_state', 'A mysterious figure...')
+        inventory = player_data.get('inventory', 'A mysterious figure...')
+        self.player = Player(name=name, backstory=backstory, profession=profession, current_state=current_state, inventory=inventory)
+        Player.add_to_db()
 
 
     def setup_quests(self):
@@ -80,27 +85,7 @@ class StoryManager:
     def start_intro(self):
         """Display the story intro and set the game stage."""
         intro_text = self.story.get('intro', "The adventure begins...")
-        print(intro_text)
-
-
-    def play(self):
-        """
-        Main gameplay loop with default quest sequence.
-        """
-        self.setup_game()  # Ensure NPCs, Quests, and Player are set up
-        self.start_intro()  # Always start with the story intro
-
-        # Default quest sequence
-        print("Starting Quest 1: The Blackmoor Curse")
-        self.play_quest(1)
-
-        print("Starting Quest 2: The Mayor’s Secret")
-        self.play_quest(2)
-
-        print("Starting Quest 3: The Demon’s Reckoning")
-        self.play_quest(3)
-
-        print("All quests completed! The adventure has ended.")
+        return intro_text
 
     
     def play_quest(self, quest_id):
@@ -116,35 +101,16 @@ class StoryManager:
             if quest.status == "not_started":
                 quest.start()
             
-            print(f"Playing Quest: {quest.name}")
-            
-            # Generate visuals for the current stage of the quest
-            self.generate_quest_visual(quest)
-
-            # Run the quest objectives
-            self.run_quest_logic(quest)
-
-            # After all objectives are completed, mark the quest as complete
-            if quest.status == "completed":
-                print(f"Quest '{quest.name}' completed!")
-            else:
-                print(f"Quest '{quest.name}' is still in progress.")
-        else:
-            print("Quest not found.")
+                # Run the quest objectives
+            self.run_quest(quest)
 
     
-    def run_quest_logic(self, quest):
+    def run_quest(self, quest):
         """
         Handle quest objectives, including player actions, LLM responses, and visual progression.
         """
-        # Simulate player's game state (placeholder, could be based on actual player input)
-        game_state = {
-            "has_item": False,  # Example condition
-            "visited_location": False,
-            "talked_to_npc": False,
-        }
-
         while quest.status == "in_progress":
+
             current_objective = quest.get_current_objective()
             
             if not current_objective:
@@ -152,58 +118,56 @@ class StoryManager:
                 quest.complete()
                 break
             
-            print(f"Current Objective: {current_objective['description']}")
+            quest_npcs = [npc for npc in self.npcs if npc.name in quest.npcs]
+            quest_details = quest.__str__()
+            player_details = self.player.__str__()
+            npc_details = [npc_details.append(npc.__str_())  for npc in quest_npcs]
             
-            # Simulate player fulfilling the objective condition
-            if self.fulfill_objective(current_objective, game_state):
-                print(f"Objective '{current_objective['description']}' completed!")
-                
-                # Generate LLM response for the scene
-                npc_context = self.llm.generate_response(quest.name, current_objective['description'])
-                print(f"LLM Response: {npc_context}")  # Display the LLM response as part of the narrative
-                
-                # Update quest progress
-                quest.update_progress(game_state)
-                
-                # Generate a new visual based on LLM response and current quest state
-                self.generate_quest_visual(quest, llm_response=npc_context)
-            else:
-                print(f"Objective '{current_objective['description']}' not completed. Please try again.")
-                break  # If the objective is not complete, stop and wait for further player actions
+
+            dialouge_prompt = f'''Act as a dungeoun master. You are running a RPG adventure quest. It is played by the player.The player details are [{player_details}].
+            The quest deatils are [{quest_details}].
+            The npcs required and for this quests and their details are: [{npc_details}].
+            Current objective of the quest is : {current_objective}.
+            If player choose to interact with enviorment,  narrator is the one who speaks next and will describe the scene after player action.
+            You can only choose between narrator and npcs for next to speak. You have to act as the character and think accordingly to the character characteristics.
+            Based on the current state, determine who speaks next. Generate the response, including any emotional tones or gestures that fit the situation.
+            based on the memory of the npc determine its relationship level with player.
+            Give me the output in the form of dialouges: ["speaker", "speakers dialouge"].
+            '''
+
+            dialouge_responses = list(self.llm.inference(prompt=dialouge_prompt))
+
+            speaker = self.get_speaker(dialouge_responses)
+            dialouge = dialouge_responses[1]
+
+            interaction  = {"player": self.player.current_move, speaker.name: dialouge}
+
+            if speaker.name != "Narrator":
+                speaker.remember_interaction(interaction)
 
 
-    def fulfill_objective(self, objective, game_state):
-        """
-        Check whether the player's game state fulfills the objective's conditions.
-        :param objective: The current quest objective to check.
-        :param game_state: The current state of the game (e.g., player's actions, items, locations).
-        :return: True if the objective is fulfilled, False otherwise.
-        """
-        condition = objective.get("condition", None)
-        
-        # Here, we simulate fulfilling the objective. In a real game, this would depend on actual game events.
-        if condition == "find_item":
-            game_state["has_item"] = True
-        elif condition == "visit_location":
-            game_state["visited_location"] = True
-        elif condition == "talk_to_npc":
-            game_state["talked_to_npc"] = True
-        
-        # Check if the condition is fulfilled
-        return game_state.get(condition, False)
+            visual_propmt = f'''Act as a professional prompt engineer and write a prompt that can be passed to sdxl model to create visual of current scene of the quest based on the information provided.
+            The quest deatils are [{quest_details}].
+            The npcs required and for this quests and their details are: [{npc_details}].
+            Current objective of the quest is : {current_objective}.
+            After the player did {self.player.current_move}, the {speaker.name} said {dialouge}.
+            If the player choose to interact with anything other than npcs just create a picture of player and the enviourment around it. 
+            Only show npcs who player interact with or see.
+            Give me the prompt in such a way that it describe poses and location of each and every entity in the scene.
+            '''
+
+            gen_visual_propmt = self.llm.inference(prompt=visual_propmt)
+
+            viusal = generate_game_image(prompt=gen_visual_propmt)
+            visual_sub = self.add_llm_subtitle(image=viusal, subtitle_text=f"[{speaker.name}]: {dialouge}")
+
+            if self.check_objective_completed(quest=quest):
+                quest.objectives = quest.objectives[quest.current_objective_index+1 :]
+
+            yield {"dialouge": dialouge_responses, "image": visual_sub}
+
+
     
-
-    def generate_quest_visual(self, quest, llm_response=""):
-        """Generate and display visuals for a quest using the Stable Diffusion model."""
-        prompt = self.get_quest_prompt(quest)
-        character_name = self.get_quest_character(quest)
-        
-        # Call the generate_game_image function to create the visual
-        image = generate_game_image(character_name=character_name, prompt_postfix=prompt)
-        image = self.add_llm_subtitle(image, llm_response)
-        return image
-
-
     def add_llm_subtitle(self, image, subtitle_text):
         """Add a subtitle (LLM response) to the generated image."""
         try:
@@ -224,30 +188,31 @@ class StoryManager:
         except Exception as e:
             print(f"Failed to add subtitle: {e}")
 
+
+    def get_speaker(self, dialouge_responses, quest_npcs):
+        for npc in quest_npcs:
+            if npc.name == dialouge_responses[0]:
+                return npc
+        else:
+            return {"name":  "Narrator"}
         
 
-    def get_quest_prompt(self, quest):
-        """Generate a prompt for the current quest, including NPC poses and environmental context."""
-        if quest.name == "The Blackmoor Curse":
-            return "standing in the dark forest, surrounded by creatures"
+    def check_objective_completed(self, quest):
+        quest_npcs = [npc for npc in self.npcs if npc.name in quest.npcs]
+        quest_details = quest.__str__()
+        player_details = self.player.__str__()
+        npc_details = [npc_details.append(npc.__str_())  for npc in quest_npcs]
 
-        elif quest.name == "The Mayor’s Secret":
-            return "in the mayor's office at night, standing behind his desk"
+        prompt = f'''Act as a dungeoun master. You are running a RPG adventure quest. It is played by the player.The player details are [{player_details}].
+            The quest deatils are [{quest_details}].
+            The npcs required and for this quests and their details are: [{npc_details}].
+            Current objective of the quest is : {quest.get_current_objective()}.
+            Check if current objective if sullfilled by the player. Reply in only yes or no.
+           '''
 
-        elif quest.name == "The Demon’s Reckoning":
-            return "in the ruined temple, preparing for battle with the demon"
+        response = self.llm.inference(prompt=prompt)
 
-        # Default prompt in case no specific quest context is found
-        return f"in the scene of the quest '{quest.name}'"
-
-
-    def get_quest_character(self, quest):
-        """Return the primary character for the quest."""
-        if quest.name == "The Blackmoor Curse":
-            return "Captain Merrick"
-        elif quest.name == "The Mayor’s Secret":
-            return "Mayor Balthas"
-        elif quest.name == "The Demon’s Reckoning":
-            return "The Demon"
-        
-        return "Unnamed Character"              
+        if "yes" in response:
+            return True
+        else:
+            return False
