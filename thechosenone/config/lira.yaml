@@ -1,10 +1,10 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 # 
-inference_prompt: Create a detailed portrait of Captain Merrick, a rugged, middle-aged Guard Captain. He has short, graying hair, a serious expression, and piercing blue eyes. He wears weathered plate armor with a blue cape, carrying a broadsword. His posture is commanding, reflecting his brave and practical nature.
+inference_prompt: a mysterious herbalist with long dark hair and piercing green eyes. She wears a simple, earthy cloak, blending into the forest. Her expression is cautious, yet wise, reflecting her secret knowledge of ancient magic. She’s surrounded by herbs and plants, with subtle magical symbols etched in the background.
 learnable_property: human
-initializer_token: cmrr
-placeholder_token: <$V$>
+initializer_token: lwhkio
+placeholder_token: l<$V$>h
 repeats: 1
 save_as_full_pipeline: true
 validation_prompt: A photo of c<$V$>m
@@ -19,10 +19,10 @@ lr_scheduler: constant
 lr_warmup_steps: 0
 mixed_precision: bf16
 seed: 42
-character_name: cmroir
-output_dir:  data/cmroir/experiments
-train_data_dir: data/cmroir/loop_images
-backup_data_dir_root: data/cmroir   # Your dataset backup folder
+character_name: lira
+output_dir:  data/lira/experiments
+train_data_dir: data/lira/loop_images
+backup_data_dir_root: data/lira   # Your dataset backup folder
 # lora_ckpt_dir: checkpoint-1200
 max_train_steps: 500
 num_of_generated_img: 128
