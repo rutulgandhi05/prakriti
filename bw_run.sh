@@ -13,7 +13,7 @@
 #SBATCH --mail-type ALL
 #SBATCH --mail-user rutul.gandhi@uni-ulm.de
 
-source $HOME/venv/bin/activate
+source $HOME/venv11/bin/activate
 
 python thechosenone/main.py
 
