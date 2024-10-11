@@ -170,3 +170,6 @@ output_*
 data/
 llm_master/config.yaml
 .vscode/
+
+error.txt
+output.txt
