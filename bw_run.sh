@@ -14,7 +14,6 @@
 
 source venv/bin/activate
 
-pip install -r thechosenone/requirements.txt
 python thechosenone/main.py
 
 
