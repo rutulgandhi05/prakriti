@@ -1,18 +1,18 @@
-pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
-pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
+pretrained_model_name_or_path: data/cap_mavrick/experiments/cap_mavrick/4
+pretrained_vae_model_name_or_path: data/cap_mavrick/experiments/cap_mavrick/4/vae
 # 
 inference_prompt: a mysterious herbalist with long dark hair and piercing green eyes. She wears a simple, earthy cloak, blending into the forest. Her expression is cautious, yet wise, reflecting her secret knowledge of ancient magic. She’s surrounded by herbs and plants, with subtle magical symbols etched in the background.
 learnable_property: human
-initializer_token: lwhkio
+initializer_token: lir
 placeholder_token: l<$V$>h
 repeats: 1
 save_as_full_pipeline: true
-validation_prompt: A photo of c<$V$>m
+validation_prompt: A photo of l<$V$>h
 caption_column: text
 resolution: 1024
 random_flip: true
 train_batch_size: 1
-num_train_epochs: 20
+num_train_epochs: 1
 checkpointing_steps: 500
 learning_rate: 0.00003
 lr_scheduler: constant
