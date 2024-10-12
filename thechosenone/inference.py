@@ -14,7 +14,7 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-def generate_game_image(prompt, config_path="thechosenone/config/klvrtdnxt.yaml", loop=0):
+def generate_game_image(prompt, config_path="thechosenone/config/captain.yaml", loop=0):
     """
     Generate an image using Stable Diffusion for a specific character and quest.
     :param character_name: The name of the character or NPC for the prompt.
@@ -43,3 +43,9 @@ def generate_game_image(prompt, config_path="thechosenone/config/klvrtdnxt.yaml"
     # Generate the image
     image = pipe(prompt, num_inference_steps=35, guidance_scale=7.5).images[0]
     return image
+
+if __name__ == "__main__":
+    for i in range(5):
+
+        img = generate_game_image(prompt="generate image of c<$V$>m", loop=i)
+        img.save(f"data/cap_mavrick/loop{i}.png")
