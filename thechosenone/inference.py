@@ -14,7 +14,7 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-def generate_game_image(prompt, config_path="thechosenone/config/captain.yaml", loop=0):
+def generate_game_image(prompt, config_path="thechosenone/config/lira.yaml", loop=0):
     """
     Generate an image using Stable Diffusion for a specific character and quest.
     :param character_name: The name of the character or NPC for the prompt.
@@ -46,14 +46,14 @@ def generate_game_image(prompt, config_path="thechosenone/config/captain.yaml", 
 
 
 def loop_inference(loop):
-    args = config_2_args("thechosenone/config/captain.yaml")
+    args = config_2_args("thechosenone/config/lira.yaml")
 
     model_path = os.path.join(args.output_dir, args.character_name, str(loop))
     pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
     pipe.to("cuda")
     pipe.load_lora_weights(os.path.join(model_path, f"checkpoint-{args.checkpointing_steps * args.num_train_epochs}"))
 
-    prompt_postfix = "riding a horse."
+    prompt_postfix = "holding a magic wand"
     image_postfix = prompt_postfix.replace(" ", "_")
 
     # create folder
