@@ -53,12 +53,12 @@ def loop_inference(loop):
     pipe.to("cuda")
     pipe.load_lora_weights(os.path.join(model_path, f"checkpoint-{args.checkpointing_steps * args.num_train_epochs}"))
 
-    prompt_postfix = " sitting on a rocket."
+    prompt_postfix = "sitting on a rocket"
     image_postfix = prompt_postfix.replace(" ", "_")
 
     # create folder
     output_folder = f"data/inference_results/{args.character_name}"
-    os.makedirs(output_folder)
+    os.makedirs(output_folder, exist_ok=True)
 
     # remember to use the place holader here
     prompt = f"A photo of {args.placeholder_token}{prompt_postfix}."
