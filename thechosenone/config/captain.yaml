@@ -3,7 +3,7 @@ pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 # 
 inference_prompt: Create a detailed portrait of Captain Merrick, a rugged, middle-aged Guard Captain. He has short, graying hair, a serious expression, and piercing blue eyes. He wears weathered plate armor with a blue cape, carrying a broadsword. His posture is commanding, reflecting his brave and practical nature.
 learnable_property: human
-initializer_token: xlzq
+initializer_token: cha
 placeholder_token: <$V$>
 repeats: 1
 save_as_full_pipeline: true
