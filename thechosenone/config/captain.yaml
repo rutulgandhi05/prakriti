@@ -1,10 +1,10 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
-# 
-inference_prompt: Create a detailed portrait of Captain Merrick, a rugged, middle-aged Guard Captain. He has short, graying hair, a serious expression, and piercing blue eyes. He wears weathered plate armor with a blue cape, carrying a broadsword. His posture is commanding, reflecting his brave and practical nature.
+
+inference_prompt: A stern, middle-aged man stands tall, exuding authority. His short, graying hair contrasts with piercing blue eyes. Adorned in weathered plate armor with a flowing blue cape, he grips a sword, embodying bravery and practicality. The backdrop features a simple sky and a field.
 learnable_property: human
 initializer_token: cha
-placeholder_token: <$V$>
+placeholder_token: c<$V$>m
 repeats: 1
 save_as_full_pipeline: true
 validation_prompt: A photo of c<$V$>m
@@ -18,7 +18,7 @@ learning_rate: 0.00003
 lr_scheduler: constant
 lr_warmup_steps: 0
 mixed_precision: bf16
-seed: 42
+seed: 41
 character_name: cap_mavrick
 output_dir:  data/cap_mavrick/experiments
 train_data_dir: data/cap_mavrick/loop_images

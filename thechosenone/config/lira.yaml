@@ -1,9 +1,9 @@
 pretrained_model_name_or_path: data/cap_mavrick/experiments/cap_mavrick/4
 pretrained_vae_model_name_or_path: data/cap_mavrick/experiments/cap_mavrick/4/vae
 # 
-inference_prompt: a mysterious herbalist with long dark hair and piercing green eyes. She wears a simple, earthy cloak, blending into the forest. Her expression is cautious, yet wise, reflecting her secret knowledge of ancient magic. She’s surrounded by herbs and plants, with subtle magical symbols etched in the background.
+inference_prompt: A mystical herbalist with long dark hair and piercing green eyes, draped in an earthy cloak, gazes cautiously among lush herbs, illuminated by soft dappled sunlight, surrounded by ancient magical symbols.
 learnable_property: human
-initializer_token: cha
+initializer_token: les
 placeholder_token: l<$V$>h
 repeats: 1
 save_as_full_pipeline: true
