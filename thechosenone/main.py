@@ -301,7 +301,7 @@ def load_dinov2():
 
 
 if __name__ == "__main__":
-    args = config_2_args("thechosenone/config/lira.yaml")
+    args = config_2_args("thechosenone/config/captain.yaml")
     _ = train_loop(args, args.max_loop, start_from=0)
     
     print(args)
