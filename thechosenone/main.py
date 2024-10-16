@@ -285,7 +285,7 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, guidance_scale=7.5):
+def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, guidance_scale=6):
     """
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
