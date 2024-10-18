@@ -1,6 +1,8 @@
-accelerate
+accelerate==0.24.1
 bitsandbytes==0.41.2.post2
-huggingface_hub
+datasets==2.15.0
+diffusers==0.24.0.dev0
+huggingface_hub==0.19.4
 matplotlib==3.8.2
 numpy==1.26.2
 packaging==23.2
@@ -13,8 +15,7 @@ scikit_learn==1.3.2
 scipy==1.11.4
 torch==2.0.1
 torchvision==0.15.2
+tqdm==4.66.1
 transformers==4.35.2
 wandb==0.16.0
 xformers==0.0.22
-git+https://github.com/huggingface/datasets.git
-diffusers==0.23.1
