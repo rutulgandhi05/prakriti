@@ -1,6 +1,6 @@
 accelerate
 bitsandbytes==0.41.2.post2
-huggingface_hub==0.19.4
+huggingface_hub===0.22.0
 matplotlib==3.8.2
 numpy==1.26.2
 packaging==23.2
