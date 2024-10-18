@@ -1,7 +1,7 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-inference_prompt: A stern, middle-aged man stands tall, exuding authority. Short, graying hair, piercing blue eyes. Adorned in weathered plate armor with a flowing blue cape, he holds a sword, brave and practical. The backdrop has a simple sky and a field.
+inference_prompt: A stern, middle-aged huaman male, exuding authority. realistic skin texture short graying hair, piercing blue eyes. Adorned in weathered plate armor with a flowing blue cape, he holds a sword. brave and practical. The backdrop has a simple sky and a field.
 learnable_property: human
 initializer_token: cha
 placeholder_token: c<$V$>m
@@ -18,7 +18,7 @@ learning_rate: 0.00003
 lr_scheduler: constant
 lr_warmup_steps: 0
 mixed_precision: bf16
-seed: 41
+seed: 45
 character_name: captain
 output_dir:  data/captain/experiments
 train_data_dir: data/captain/loop_images
