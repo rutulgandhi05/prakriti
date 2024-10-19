@@ -1,1 +1,1 @@
-python consistent_character/main.py
+python consistent_character/main.py --config consistent_character/config/captain.yaml
