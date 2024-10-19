@@ -290,7 +290,8 @@ def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, g
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
     """
-    image = pipe(prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale).images[0]
+    n_propmt = "painting, drawing, illustration, anime, cartoon, graphic, text, pencil, sketch, crayon, graphite, abstract, 3d art, rendered, deviantart"
+    image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_propmt).images[0]
     return image
 
 

@@ -1,7 +1,7 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-inference_prompt: A stern, middle-aged huaman male, showing authority. realistic skin texture, short graying hair, piercing blue eyes. wears a weathered plate armor with a flowing blue cape, he holds a sword. brave and practical.
+inference_prompt: Cinematic photo of middle-aged huaman male, showing authority. realistic skin texture, short graying hair, piercing blue eyes. wears a weathered plate armor with a flowing blue cape, he holds a sword. brave and practical.
 learnable_property: human
 initializer_token: cha
 placeholder_token: c<$V$>m
