@@ -1,0 +1,41 @@
+# General settings
+loop_num: 5  # Number of loops for image generation, clustering, and fine-tuning
+output_dir: "data/consistent_character/captain_mavrick/outputs"  # Directory to save generated images, models, and checkpoints
+checkpoint_path: "data/consistent_character/captain_mavrick/checkpoints"  # Path to save checkpoints during training
+checkpointing_steps: 100  # Steps for saving checkpoints during fine-tuning
+image_generation_seed: 42  # Seed for reproducibility during image generation
+batch_size: 8  # Batch size for training and clustering
+
+# Image generation
+inference_prompt: "a portrait of captain_mavrick, a realistic human character, natural lighting, detailed face"
+negative_prompt: "cartoon, anime, unrealistic, 3d render"
+num_of_generated_img: 50  # Number of images generated per batch
+infer_steps: 50  # Number of diffusion steps in image generation
+
+# Placeholder tokens and textual inversion
+use_textual_inversion: True  # Enable textual inversion to create placeholder tokens for characters
+textual_inversion_token: "captain_mavrick"  # Placeholder token to represent the generated character identity
+textual_inversion_steps: 1000  # Number of steps for training the textual inversion embeddings
+textual_inversion_checkpoint_steps: 100  # Save checkpoints during textual inversion training
+textual_inversion_prompt: "A portrait of captain_mavrick, a human character"  # Prompt with placeholder token for textual inversion training
+
+# Clustering settings
+kmeans_center: 5  # Number of clusters for K-means clustering
+dmin_c: 3  # Minimum number of images per cluster to consider it for fine-tuning
+convergence_scale: 0.8  # Threshold for determining convergence of cluster cohesion
+
+# Fine-tuning with LoRA
+lora_rank: 8  # LoRA rank for low-rank adaptation in model fine-tuning
+learning_rate: 5e-5  # Learning rate for fine-tuning the model
+num_train_epochs: 10  # Number of epochs for fine-tuning the model with LoRA layers
+
+# Model paths (for internally generated models, no pretrained models required)
+internal_model_path: "data/consistent_character/captain_mavrick/generated_model"  # Path to store and retrieve the internally generated model
+fine_tuned_model_path: "data/consistent_character/captain_mavrick/fine_tuned_model"  # Path to save the final fine-tuned model after all loops
+
+# Textual inversion output
+textual_inversion_output_dir: "data/consistent_character/captain_mavrick/textual_inversion_outputs"  # Directory to save outputs related to textual inversion
+
+# Internal generation and training control
+use_internal_generation: True  # Self-contained image generation and training without external datasets
+

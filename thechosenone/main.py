@@ -285,12 +285,12 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, guidance_scale=5):
+def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, guidance_scale=7.5):
     """
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
     """
-    n_propmt = "painting, drawing, illustration, anime, cartoon, graphic, text, pencil, sketch, crayon, graphite, abstract, 3d art, rendered, deviantart"
+    n_propmt = "cartoon, anime, sketch, 3d render, unrealistic, painting"
     image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_propmt).images[0]
     return image
 
