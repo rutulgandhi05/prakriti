@@ -8,6 +8,8 @@ from sklearn.cluster import KMeans
 from diffusers import StableDiffusionXLPipeline
 from hdbscan import HDBSCAN
 import sdxl_consistent_character as sdxl  # Importing the fine-tuning module
+from transformers import CLIPProcessor, CLIPModel
+from facenet_pytorch import InceptionResnetV1
 
 # ------------------------------
 # Command-line Argument Parsing
@@ -41,6 +43,34 @@ def generate_images_with_fixed_seed(pipe: StableDiffusionXLPipeline, prompt: str
     generator = torch.manual_seed(seed)
     images = [pipe(prompt=prompt, negative_prompt=negative_prompt, generator=generator).images[0] for _ in range(batch_size)]
     return images
+
+# ------------------------------
+# Feature Extraction
+# ------------------------------
+def extract_combined_features(image):
+    """
+    Extract features from multiple feature extractors (DINOv2, CLIP, Facenet).
+    Combine these features for better clustering performance.
+    """
+    # Initialize the feature extractors (CLIP, Facenet)
+    clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+    clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    facenet = InceptionResnetV1(pretrained='vggface2').eval()
+
+    # Convert the image to tensor for feature extraction
+    image_tensor = torch.tensor(np.array(image)).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+
+    # Extract CLIP features
+    clip_inputs = clip_processor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        clip_features = clip_model.get_image_features(**clip_inputs).squeeze().cpu().numpy()
+
+    # Extract Facenet features (for facial recognition features)
+    facenet_features = facenet(image_tensor).detach().cpu().numpy().squeeze()
+
+    # Combine features into a single feature vector
+    combined_features = np.concatenate([clip_features, facenet_features], axis=0)
+    return combined_features
 
 # ------------------------------
 # Clustering
@@ -108,7 +138,7 @@ def train_loop(pipe, args):
         images = generate_images_with_fixed_seed(pipe, prompt=args['inference_prompt'], batch_size=args['batch_size'], seed=random.randint(0, 10000), negative_prompt=args['negative_prompt'])
         print(f"Generated {len(images)} images.")
 
-        # Extract combined embeddings (DINOv2 + CLIP + Facenet)
+        # Extract combined embeddings (CLIP + Facenet)
         embeddings = [extract_combined_features(image) for image in images]
         
         # Perform adaptive clustering
