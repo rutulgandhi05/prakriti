@@ -18,6 +18,7 @@ textual_inversion_token: "captain_mavrick"  # Placeholder token to represent the
 textual_inversion_steps: 1000  # Number of steps for training the textual inversion embeddings
 textual_inversion_checkpoint_steps: 100  # Save checkpoints during textual inversion training
 textual_inversion_prompt: "A portrait of captain_mavrick, a human character"  # Prompt with placeholder token for textual inversion training
+textual_inversion_output_dir: "data/consistent_character/captain_mavrick/textual_inversion_outputs"  # Directory to save outputs related to textual inversion
 
 # Clustering settings
 kmeans_center: 5  # Number of clusters for K-means clustering
@@ -30,11 +31,9 @@ learning_rate: 5e-5  # Learning rate for fine-tuning the model
 num_train_epochs: 10  # Number of epochs for fine-tuning the model with LoRA layers
 
 # Model paths (for internally generated models, no pretrained models required)
-internal_model_path: "data/consistent_character/captain_mavrick/generated_model"  # Path to store and retrieve the internally generated model
+base_model_path: "stabilityai/stable-diffusion-xl-base-1.0"
 fine_tuned_model_path: "data/consistent_character/captain_mavrick/fine_tuned_model"  # Path to save the final fine-tuned model after all loops
 
-# Textual inversion output
-textual_inversion_output_dir: "data/consistent_character/captain_mavrick/textual_inversion_outputs"  # Directory to save outputs related to textual inversion
 
 # Internal generation and training control
 use_internal_generation: True  # Self-contained image generation and training without external datasets

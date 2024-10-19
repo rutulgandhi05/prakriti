@@ -170,6 +170,43 @@ def train_loop(pipe, args):
     print("Training loop complete.")
     return all_interpolated_images
 
+
+def load_model(config):
+    """
+    Load the base SDXL model or resume from a fine-tuned checkpoint.
+    """
+    model_path = config['base_model_path']
+    checkpoint_dir = config['checkpoint_path']
+
+    # If a fine-tuned checkpoint exists, load it, otherwise load the base SDXL model
+    checkpoint_file = os.path.join(checkpoint_dir, "model_checkpoint_latest.pt")
+    
+    if os.path.exists(checkpoint_file):
+        print(f"Loading fine-tuned model from {checkpoint_file}...")
+        pipe = StableDiffusionXLPipeline.from_pretrained(checkpoint_file, torch_dtype=torch.float16)
+    else:
+        print(f"Loading base model from {model_path}...")
+        pipe = StableDiffusionXLPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
+    
+    return pipe
+
+
+def save_checkpoint(pipe, checkpoint_dir, loop_num):
+    """
+    Save a checkpoint after each loop to enable resuming or further fine-tuning.
+    """
+    checkpoint_path = os.path.join(checkpoint_dir, f"model_checkpoint_{loop_num}.pt")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    
+    # Save the pipeline's state_dict (the model weights and configurations)
+    pipe.save_pretrained(checkpoint_path)
+    print(f"Checkpoint saved at: {checkpoint_path}")
+
+    # Also save a "latest" pointer to easily resume from the most recent checkpoint
+    latest_checkpoint_path = os.path.join(checkpoint_dir, "model_checkpoint_latest.pt")
+    pipe.save_pretrained(latest_checkpoint_path)
+    print(f"Latest checkpoint saved at: {latest_checkpoint_path}")
+
 # ------------------------------
 # Main Function
 # ------------------------------
@@ -181,7 +218,7 @@ if __name__ == "__main__":
     config = load_config(args.config)
 
     # Initialize the Stable Diffusion pipeline
-    pipe = StableDiffusionXLPipeline.from_pretrained(config['internal_model_path'], torch_dtype=torch.float16)
+    pipe = load_model(config)
 
     # Run the image generation and clustering
     interpolated_images = train_loop(pipe, config)
