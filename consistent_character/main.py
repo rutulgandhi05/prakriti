@@ -138,7 +138,7 @@ def train_loop(pipe, args):
         images = generate_images_with_fixed_seed(pipe, prompt=args['inference_prompt'], batch_size=args['batch_size'], seed=random.randint(0, 10000), negative_prompt=args['negative_prompt'])
         print(f"Generated {len(images)} images.")
 
-        # Extract combined embeddings (CLIP + Facenet)
+        # Extract combined embeddings (DINOv2 + CLIP + Facenet)
         embeddings = [extract_combined_features(image) for image in images]
         
         # Perform adaptive clustering

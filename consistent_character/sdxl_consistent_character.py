@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import UNet2DConditionModel, StableDiffusionXLPipeline
-from diffusers.models.attention_processor import LoRALinearLayer
+from diffusers.models.lora import LoRALinearLayer
 from accelerate import Accelerator
 
 # ------------------------------
