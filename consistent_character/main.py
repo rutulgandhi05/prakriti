@@ -205,7 +205,7 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
             cohesive_cluster_images[i].save(os.path.join(args.train_data_dir_per_loop, f"image_{sample_id + 1}.png"))
 
         # Calculate combined similarity for character consistency
-        character_consistency = compute_character_consistency(dinov2, clip_model, clip_processor, cohesive_cluster_images)
+        character_consistency = compute_character_consistency(load_dinov2(), clip_model, clip_processor, cohesive_cluster_images)
 
         # Check if the character consistency meets the threshold for convergence
         print(f"Character Consistency for loop {loop}: {character_consistency}")
