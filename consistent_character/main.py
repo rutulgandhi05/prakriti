@@ -26,6 +26,8 @@ def compute_character_consistency(dino_model, clip_model, clip_processor, images
     # Step 2: Use DINOv2 to extract character features
     dino_embeddings = [infer_model(dino_model, image).detach().cpu().numpy() for image in character_images]
 
+    dino_embeddings = [embedding.flatten() for embedding in dino_embeddings]
+
     # Step 3: Compare character features using DINOv2 embeddings
     dino_similarity_matrix = cosine_similarity(dino_embeddings)
 
@@ -187,9 +189,7 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
             # Extract embeddings using DINOv2
             image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
 
-        del pipe
-        del dinov2
-        torch.cuda.empty_cache()
+        
 
         # Reshape DINOv2 embeddings and perform clustering
         embeddings = np.array(image_embs).reshape(len(image_embs), -1)
@@ -205,7 +205,11 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
             cohesive_cluster_images[i].save(os.path.join(args.train_data_dir_per_loop, f"image_{sample_id + 1}.png"))
 
         # Calculate combined similarity for character consistency
-        character_consistency = compute_character_consistency(load_dinov2(), clip_model, clip_processor, cohesive_cluster_images)
+        character_consistency = compute_character_consistency(dinov2, clip_model, clip_processor, cohesive_cluster_images)
+        
+        del pipe
+        del dinov2
+        torch.cuda.empty_cache()
 
         # Check if the character consistency meets the threshold for convergence
         print(f"Character Consistency for loop {loop}: {character_consistency}")
