@@ -1,40 +1,65 @@
-# General settings
-loop_num: 5  # Number of loops for image generation, clustering, and fine-tuning
-output_dir: "data/consistent_character/captain_mavrick/outputs"  # Directory to save generated images, models, and checkpoints
-checkpoint_path: "data/consistent_character/captain_mavrick/checkpoints"  # Path to save checkpoints during training
-checkpointing_steps: 100  # Steps for saving checkpoints during fine-tuning
-image_generation_seed: 42  # Seed for reproducibility during image generation
-batch_size: 8  # Batch size for training and clustering
+pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
+pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-# Image generation
-inference_prompt: "a portrait of captain_mavrick, a realistic human character, natural lighting, detailed face"
-negative_prompt: "cartoon, anime, unrealistic, 3d render"
-num_of_generated_img: 50  # Number of images generated per batch
-infer_steps: 50  # Number of diffusion steps in image generation
+inference_prompt: a hyper realistic high quality photot of a human man. short, graying hair, blue eyes. Adorned in weathered plate armor with a flowing blue cape, he grips a sword, embodying bravery and practicality.
+learnable_property: object
+initializer_token: cha
+placeholder_token: c<$V$>m
+repeats: 1
+save_as_full_pipeline: true
+validation_prompt: A photo of c<$V$>m
+caption_column: text
+resolution: 1024
+random_flip: true
+train_batch_size: 1
+num_train_epochs: 1
+checkpointing_steps: 500
+learning_rate: 0.00003
+lr_scheduler: constant
+lr_warmup_steps: 0
+mixed_precision: bf16
+seed: 45
+character_name: cap
+output_dir: data/cap/experiments
+train_data_dir: data/cap/loop_images
+backup_data_dir_root: data/cap   # Your dataset backup folder
+# lora_ckpt_dir: checkpoint-1200
+max_train_steps: 500
+num_of_generated_img: 128
+dmin_c: 10
+dsize_c: 20         
+infer_steps: 35
+adam_epsilon: 0.000000001
+adam_weight_decay: 0.01
+adam_beta1: 0.9
+adam_beta2: 0.99
+max_loop: 5
+convergence_scale: 0.8  # 80% in the paper
 
-# Placeholder tokens and textual inversion
-use_textual_inversion: True  # Enable textual inversion to create placeholder tokens for characters
-textual_inversion_token: "captain_mavrick"  # Placeholder token to represent the generated character identity
-textual_inversion_steps: 1000  # Number of steps for training the textual inversion embeddings
-textual_inversion_checkpoint_steps: 100  # Save checkpoints during textual inversion training
-textual_inversion_prompt: "A portrait of captain_mavrick, a human character"  # Prompt with placeholder token for textual inversion training
-textual_inversion_output_dir: "data/consistent_character/captain_mavrick/textual_inversion_outputs"  # Directory to save outputs related to textual inversion
+# Enhancements
+high_learning_rate: 0.00003     # Initial high learning rate
+low_learning_rate: 0.000005     # Lower learning rate after consistency threshold
+consistency_threshold: 0.75     # Character consistency threshold
+use_dinov2_clip: true           # Use both DINOv2 and CLIP models for embedding extraction
+character_consistency_threshold: 0.85  # Consistency level required to be considered converged
+cluster_specific_finetune: true  # Enable fine-tuning for individual clusters
 
-# Clustering settings
-kmeans_center: 5  # Number of clusters for K-means clustering
-dmin_c: 3  # Minimum number of images per cluster to consider it for fine-tuning
-convergence_scale: 0.8  # Threshold for determining convergence of cluster cohesion
-
-# Fine-tuning with LoRA
-lora_rank: 8  # LoRA rank for low-rank adaptation in model fine-tuning
-learning_rate: 5e-5  # Learning rate for fine-tuning the model
-num_train_epochs: 10  # Number of epochs for fine-tuning the model with LoRA layers
-
-# Model paths (for internally generated models, no pretrained models required)
-base_model_path: "stabilityai/stable-diffusion-xl-base-1.0"
-fine_tuned_model_path: "data/consistent_character/captain_mavrick/fine_tuned_model"  # Path to save the final fine-tuned model after all loops
-
-
-# Internal generation and training control
-use_internal_generation: True  # Self-contained image generation and training without external datasets
-
+# inherited from origin, no need to change
+gradient_accumulation_steps: 1
+report_to: tensorboard
+push_to_hub: false
+num_vectors: 1
+enable_xformers_memory_efficient_attention: false
+rank: 4
+train_text_encoder: false
+allow_tf32: false
+scale_lr: false
+use_8bit_adam: false
+text_inv: true  # Enable textual inversion fine-tuning
+lora: true      # Enable LoRA fine-tuning
+center_crop: true
+dataloader_num_workers: 0
+noise_offset: 0
+max_grad_norm: 1.0
+num_validation_images: 4
+validation_epochs: 1

@@ -1,231 +1,227 @@
-import argparse
-import yaml
+import os
+import shutil
 import torch
 import numpy as np
-import os
-import random
 from sklearn.cluster import KMeans
-from diffusers import StableDiffusionXLPipeline
-from hdbscan import HDBSCAN
-import sdxl_consistent_character as sdxl  # Importing the fine-tuning module
+from sklearn.metrics.pairwise import cosine_similarity
+from torchvision import transforms as T
+from torchvision.transforms.functional import center_crop
 from transformers import CLIPProcessor, CLIPModel
-from facenet_pytorch import InceptionResnetV1
+from PIL import Image
+from the_chosen_one import fine_tune_model, config_2_args
+from diffusers import StableDiffusionXLPipeline
 
-# ------------------------------
-# Command-line Argument Parsing
-# ------------------------------
-def parse_args():
-    """
-    Parse command-line arguments to get the config file.
-    """
-    parser = argparse.ArgumentParser(description="Run the full image generation and fine-tuning pipeline.")
-    parser.add_argument('--config', type=str, required=True, help="Path to the YAML configuration file.")
-    return parser.parse_args()
+# Load CLIP model for character consistency check
+clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").cuda()
+clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
-# ------------------------------
-# YAML Configuration Loading
-# ------------------------------
-def load_config(config_path):
-    """
-    Load the YAML configuration file.
-    """
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
 
-# ------------------------------
-# Image Generation
-# ------------------------------
-def generate_images_with_fixed_seed(pipe: StableDiffusionXLPipeline, prompt: str, batch_size=8, seed=42, negative_prompt=None):
+def compute_character_consistency(dino_model, clip_model, clip_processor, images):
     """
-    Generate a batch of images with a fixed random seed and a negative prompt to avoid unwanted styles.
+    Compute character consistency by focusing on the character's features.
     """
-    generator = torch.manual_seed(seed)
-    images = [pipe(prompt=prompt, negative_prompt=negative_prompt, generator=generator).images[0] for _ in range(batch_size)]
-    return images
+    # Step 1: Extract character region (center crop or use more advanced segmentation)
+    character_images = [extract_character(image) for image in images]
 
-# ------------------------------
-# Feature Extraction
-# ------------------------------
-def extract_combined_features(image):
-    """
-    Extract features from multiple feature extractors (DINOv2, CLIP, Facenet).
-    Combine these features for better clustering performance.
-    """
-    # Initialize the feature extractors (CLIP, Facenet)
-    clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-    clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-    facenet = InceptionResnetV1(pretrained='vggface2').eval()
+    # Step 2: Use DINOv2 to extract character features
+    dino_embeddings = [infer_model(dino_model, image).detach().cpu().numpy() for image in character_images]
 
-    # Convert the image to tensor for feature extraction
-    image_tensor = torch.tensor(np.array(image)).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+    # Step 3: Compare character features using DINOv2 embeddings
+    dino_similarity_matrix = cosine_similarity(dino_embeddings)
 
-    # Extract CLIP features
-    clip_inputs = clip_processor(images=image, return_tensors="pt")
+    # Step 4: Use CLIP for character identity similarity
+    inputs = clip_processor(images=character_images, return_tensors="pt", padding=True).to('cuda')
     with torch.no_grad():
-        clip_features = clip_model.get_image_features(**clip_inputs).squeeze().cpu().numpy()
+        image_features = clip_model.get_image_features(**inputs)
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+        clip_similarity_matrix = cosine_similarity(image_features.cpu().numpy())
 
-    # Extract Facenet features (for facial recognition features)
-    facenet_features = facenet(image_tensor).detach().cpu().numpy().squeeze()
+    # Combine DINOv2 and CLIP similarities for character consistency
+    combined_similarity = (0.5 * dino_similarity_matrix.mean()) + (0.5 * clip_similarity_matrix.mean())
 
-    # Combine features into a single feature vector
-    combined_features = np.concatenate([clip_features, facenet_features], axis=0)
-    return combined_features
+    return combined_similarity
 
-# ------------------------------
-# Clustering
-# ------------------------------
-def kmeans_clustering_with_adaptive_threshold(args, data_points, images=None):
+
+def extract_character(image):
     """
-    Perform K-means clustering and adjust the similarity threshold based on variability of distances.
+    Extract the character from the image using center cropping.
     """
-    kmeans = KMeans(n_clusters=args['kmeans_center'], init='k-means++', random_state=42)
+    # Simple center crop (assuming the character is in the center)
+    width, height = image.size
+    crop_size = min(width, height)
+    image = center_crop(image, crop_size)
+    return image
+
+
+def kmeans_clustering(args, data_points, images=None):
+    """
+    Perform KMeans clustering on the DINOv2 embeddings.
+    """
+    kmeans = KMeans(n_clusters=args.kmeans_center, init='k-means++', random_state=42)
     kmeans.fit(data_points)
     labels = kmeans.labels_
 
-    clusters = {i: [] for i in range(args['kmeans_center'])}
-    for idx, label in enumerate(labels):
-        clusters[label].append((data_points[idx], images[idx])) if images else None
+    centers = kmeans.cluster_centers_
+    selected_labels = [label for label in labels]
+    selected_elements = np.array([data_points[i] for i in range(len(labels))])
 
-    # Filter small clusters based on minimum cluster size (dmin_c)
-    selected_clusters = [cluster for cluster in clusters.values() if len(cluster) >= args['dmin_c']]
+    selected_images = [images[i] for i in range(len(labels))] if images else None
 
-    # Dynamically adjust the threshold for clustering
-    avg_distance = np.mean([np.linalg.norm(e[0] - np.mean([c[0] for c in cluster], axis=0)) for cluster in selected_clusters for e in cluster])
-    threshold = args['convergence_scale'] + avg_distance * 0.5  # Adjust dynamically based on variability
+    return centers, np.array(selected_labels), selected_elements, selected_images
 
-    most_cohesive_cluster = min(selected_clusters, key=lambda cluster: 
-                                np.mean([np.linalg.norm(e[0] - np.mean([c[0] for c in cluster], axis=0)) 
-                                         for e in cluster]))
 
-    return most_cohesive_cluster
-
-# ------------------------------
-# Latent Space Interpolation
-# ------------------------------
-def interpolate_in_latent_space(latent1, latent2, alpha=0.5):
+def load_trained_pipeline(model_path=None, load_lora=False, lora_path=None):
     """
-    Perform interpolation between two latent representations to smooth out differences.
+    Load the Stable Diffusion pipeline, optionally with LoRA fine-tuned weights.
     """
-    return latent1 * (1 - alpha) + latent2 * alpha
-
-# ------------------------------
-# Saving Images
-# ------------------------------
-def save_images(images, output_dir, prefix='interpolated'):
-    """
-    Save the generated or interpolated images to a specified output directory.
-    """
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    for i, image in enumerate(images):
-        image.save(os.path.join(output_dir, f"{prefix}_{i}.png"))
-
-# ------------------------------
-# Training Loop (Image Generation + Clustering)
-# ------------------------------
-def train_loop(pipe, args):
-    """
-    Main training loop with batch generation, clustering, interpolation, and saving fine-tuned images.
-    This function returns the interpolated images for further fine-tuning.
-    """
-    all_interpolated_images = []
-
-    for loop in range(args['loop_num']):
-        print(f"Starting loop {loop + 1}/{args['loop_num']}")
-        
-        # Generate a batch of images with fixed seed and negative prompt
-        images = generate_images_with_fixed_seed(pipe, prompt=args['inference_prompt'], batch_size=args['batch_size'], seed=random.randint(0, 10000), negative_prompt=args['negative_prompt'])
-        print(f"Generated {len(images)} images.")
-
-        # Extract combined embeddings (DINOv2 + CLIP + Facenet)
-        embeddings = [extract_combined_features(image) for image in images]
-        
-        # Perform adaptive clustering
-        most_cohesive_cluster = kmeans_clustering_with_adaptive_threshold(args, embeddings, images)
-        print(f"Most cohesive cluster selected with {len(most_cohesive_cluster)} images.")
-
-        # Perform latent space interpolation between the selected images for consistency
-        interpolated_images = []
-        for i in range(0, len(most_cohesive_cluster) - 1, 2):
-            latent1 = pipe.encode_image(most_cohesive_cluster[i][1])
-            latent2 = pipe.encode_image(most_cohesive_cluster[i + 1][1])
-            interpolated_latent = interpolate_in_latent_space(latent1, latent2)
-            interpolated_images.append(pipe.decode_image(interpolated_latent))
-        print(f"Interpolated {len(interpolated_images)} images.")
-
-        # Save interpolated images
-        output_dir = os.path.join(args['output_dir'], f"loop_{loop + 1}")
-        save_images(interpolated_images, output_dir, prefix='interpolated')
-        print(f"Saved interpolated images to {output_dir}.")
-
-        # Append interpolated images to return later for fine-tuning
-        all_interpolated_images.extend(interpolated_images)
-
-        # Save model checkpoint (if necessary)
-        checkpoint_path = os.path.join(output_dir, "model_checkpoint.pt")
-        torch.save(pipe.state_dict(), checkpoint_path)
-        print(f"Saved model checkpoint to {checkpoint_path}.")
-
-    print("Training loop complete.")
-    return all_interpolated_images
-
-
-def load_model(config):
-    """
-    Load the base SDXL model or resume from a fine-tuned checkpoint.
-    """
-    model_path = config['base_model_path']
-    checkpoint_dir = config['checkpoint_path']
-
-    # If a fine-tuned checkpoint exists, load it, otherwise load the base SDXL model
-    checkpoint_file = os.path.join(checkpoint_dir, "model_checkpoint_latest.pt")
-    
-    if os.path.exists(checkpoint_file):
-        print(f"Loading fine-tuned model from {checkpoint_file}...")
-        pipe = StableDiffusionXLPipeline.from_pretrained(checkpoint_file, torch_dtype=torch.float16)
-    else:
-        print(f"Loading base model from {model_path}...")
+    if model_path is not None:
         pipe = StableDiffusionXLPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
-    
+        if load_lora and lora_path:
+            pipe.load_lora_weights(lora_path)
+    else:
+        pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0")
+    pipe.to("cuda")
     return pipe
 
 
-def save_checkpoint(pipe, checkpoint_dir, loop_num):
+def infer_model(model, image):
     """
-    Save a checkpoint after each loop to enable resuming or further fine-tuning.
+    Infer embeddings from DINOv2 model.
     """
-    checkpoint_path = os.path.join(checkpoint_dir, f"model_checkpoint_{loop_num}.pt")
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    
-    # Save the pipeline's state_dict (the model weights and configurations)
-    pipe.save_pretrained(checkpoint_path)
-    print(f"Checkpoint saved at: {checkpoint_path}")
+    transform = T.Compose([
+        T.Resize((518, 518)),
+        T.ToTensor(),
+        T.Normalize((0.485, 0.456, 0.406), (0.228, 0.224, 0.225))
+    ])
+    image = transform(image).unsqueeze(0).cuda()
+    return model(image, is_training=False)
 
-    # Also save a "latest" pointer to easily resume from the most recent checkpoint
-    latest_checkpoint_path = os.path.join(checkpoint_dir, "model_checkpoint_latest.pt")
-    pipe.save_pretrained(latest_checkpoint_path)
-    print(f"Latest checkpoint saved at: {latest_checkpoint_path}")
 
-# ------------------------------
-# Main Function
-# ------------------------------
+def generate_images(pipe, prompt, infer_steps, index=None):
+    """
+    Generate a single image using the diffusion model pipeline.
+    """
+    negative_prompt = "cartoon, anime, sketch, 3d render, unrealistic, painting, blur, distortion"
+
+    # Handle seed for consistent generation if index is provided
+    if index is not None:
+        torch.manual_seed(index * np.random.randint(1000))
+
+    # Generate the image using the diffusion pipeline
+    image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=7.5,
+                 negative_prompt=negative_prompt).images[0]
+
+    return image
+
+
+def save_image(image, output_dir, image_index):
+    """
+    Save the generated image to the specified directory.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    image_path = os.path.join(output_dir, f"{image_index}.png")
+    image.save(image_path)
+    print(f"Saved image to {image_path}")
+
+
+def load_dinov2():
+    """
+    Load the DINOv2 model from Facebook's repository.
+    """
+    return torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14').cuda()
+
+
+def train_loop(args, loop_num: int, vis=True, start_from=0):
+    """
+    Main training loop that generates images, clusters them with DINOv2,
+    and checks convergence for character consistency.
+    """
+    output_dir_base = args.output_dir
+    train_data_dir_base = args.train_data_dir
+    num_train_epochs = args.num_train_epochs
+    checkpointing_steps = args.checkpointing_steps
+
+    args.kmeans_center = int(args.num_of_generated_img / args.dsize_c)
+    init_dist = 0
+
+    for loop in range(start_from, loop_num):
+        print(f"Starting loop {loop}/{loop_num - 1}")
+
+        dinov2 = load_dinov2()  # Load DINOv2 model
+
+        # Load diffusion model for image generation
+        if loop == 0:
+            pipe = load_trained_pipeline()
+        else:
+            pipe = load_trained_pipeline(
+                model_path=os.path.join(output_dir_base, args.character_name, str(loop - 1)),
+                load_lora=True,
+                lora_path=os.path.join(output_dir_base, args.character_name, str(loop - 1),
+                                       f"checkpoint-{checkpointing_steps * num_train_epochs}")
+            )
+
+        args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop))
+        args.train_data_dir_per_loop = os.path.join(train_data_dir_base, args.character_name, str(loop))
+
+        if os.path.exists(args.train_data_dir_per_loop):
+            shutil.rmtree(args.train_data_dir_per_loop)
+        os.makedirs(args.train_data_dir_per_loop, exist_ok=True)
+
+        # Generate images and extract embeddings with DINOv2
+        image_embs = []
+        images = []
+
+        # Generation and saving process during image creation
+        for n_img in range(args.num_of_generated_img):
+            print(f"Generating image {n_img + 1}/{args.num_of_generated_img}")
+            # Generate the image using the generate_images function
+            image = generate_images(pipe, prompt=args.inference_prompt, infer_steps=args.infer_steps, index=n_img)
+
+            tmp_folder = f"{args.backup_data_dir_root}/{args.character_name}/{loop}"
+            if not os.path.exists(tmp_folder):
+                os.makedirs(tmp_folder, exist_ok=True)
+            # Save the generated image and create a backup
+            save_image(image, tmp_folder, n_img + 1)
+
+            images.append(image)
+            # Extract embeddings using DINOv2
+            image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
+
+        del pipe
+        del dinov2
+        torch.cuda.empty_cache()
+
+        # Reshape DINOv2 embeddings and perform clustering
+        embeddings = np.array(image_embs).reshape(len(image_embs), -1)
+        centers, labels, elements, images = kmeans_clustering(args, embeddings, images=images)
+
+        # Identify the most cohesive cluster
+        cohesions = [sum(np.linalg.norm(elements[labels == i] - centers[i], axis=1)) for i in range(len(centers))]
+        min_cohesion_label = np.argmin(cohesions)
+        idx = np.where(labels == min_cohesion_label)[0]
+
+        cohesive_cluster_images = [images[sample_id] for sample_id in idx]
+        for i, sample_id in enumerate(idx):
+            cohesive_cluster_images[i].save(os.path.join(args.train_data_dir_per_loop, f"image_{sample_id + 1}.png"))
+
+        # Calculate combined similarity for character consistency
+        character_consistency = compute_character_consistency(dinov2, clip_model, clip_processor, cohesive_cluster_images)
+
+        # Check if the character consistency meets the threshold for convergence
+        print(f"Character Consistency for loop {loop}: {character_consistency}")
+
+        if character_consistency > args.character_consistency_threshold:
+            print(f"Converged based on character consistency at loop {loop}.")
+            break  # Exit the loop if convergence is reached
+
+        # Fine-tune the model with the cohesive cluster
+        args.character_consistency = character_consistency
+        fine_tune_model(args, loop)
+
+        print(f"[{loop}/{loop_num-1}] Finish.")
+        torch.cuda.empty_cache()
+
+
 if __name__ == "__main__":
-    # Parse command-line arguments
-    args = parse_args()
-    
-    # Load configuration file
-    config = load_config(args.config)
-
-    # Initialize the Stable Diffusion pipeline
-    pipe = load_model(config)
-
-    # Run the image generation and clustering
-    interpolated_images = train_loop(pipe, config)
-
-    # After image generation, invoke the fine-tuning using `sdxl_the_chosen_one`
-    print("Starting fine-tuning with LoRA and textual inversion...")
-    
-    # Invoke textual inversion and fine-tuning from sdxl_the_chosen_one.py
-    sdxl.textual_inversion(pipe, config)  # Fine-tune with textual inversion
-    sdxl.train_pipeline(pipe, interpolated_images, config)  # Perform LoRA fine-tuning
+    args = config_2_args("thechosenone/config/captain.yaml")
+    train_loop(args, args.max_loop)
