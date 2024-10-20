@@ -39,7 +39,7 @@ convergence_scale: 0.8  # 80% in the paper
 # Enhancements
 high_learning_rate: 0.00003     # Initial high learning rate
 low_learning_rate: 0.000005     # Lower learning rate after consistency threshold
-consistency_threshold: 0.75     # Character consistency threshold
+consistency_threshold: 0.9     # Character consistency threshold
 use_dinov2_clip: true           # Use both DINOv2 and CLIP models for embedding extraction
 character_consistency_threshold: 0.85  # Consistency level required to be considered converged
 cluster_specific_finetune: true  # Enable fine-tuning for individual clusters
