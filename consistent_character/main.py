@@ -16,16 +16,16 @@ clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").cuda()
 clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 
-def compute_character_consistency(dino_model, clip_model, clip_processor, images):
+def compute_character_consistency(dino_model, clip_model, clip_processor, images, initial_consistency=None, iteration=0):
     """
-    Compute character consistency by focusing on the character's features.
+    Compute character consistency by focusing on the character's features using DINOv2 and CLIP.
+    Implements gradual convergence and considers intra-cluster variability.
     """
     # Step 1: Extract character region (center crop or use more advanced segmentation)
     character_images = [extract_character(image) for image in images]
 
     # Step 2: Use DINOv2 to extract character features
     dino_embeddings = [infer_model(dino_model, image).detach().cpu().numpy() for image in character_images]
-
     dino_embeddings = [embedding.flatten() for embedding in dino_embeddings]
 
     # Step 3: Compare character features using DINOv2 embeddings
@@ -38,10 +38,27 @@ def compute_character_consistency(dino_model, clip_model, clip_processor, images
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
         clip_similarity_matrix = cosine_similarity(image_features.cpu().numpy())
 
-    # Combine DINOv2 and CLIP similarities for character consistency
-    combined_similarity = (0.5 * dino_similarity_matrix.mean()) + (0.5 * clip_similarity_matrix.mean())
+    # Step 5: Adjust weights dynamically based on iteration
+    dino_weight = max(0.1, 1 - iteration * 0.1)  # Reduce DINO's weight over time
+    clip_weight = 1 - dino_weight
 
-    return combined_similarity
+    # Combine DINOv2 and CLIP similarities for character consistency
+    combined_similarity = (dino_weight * dino_similarity_matrix.mean()) + (clip_weight * clip_similarity_matrix.mean())
+
+    # Step 6: Measure intra-cluster variability to ensure consistent clustering
+    dino_variability = np.var(dino_similarity_matrix)
+    clip_variability = np.var(clip_similarity_matrix)
+    
+    combined_variability = (dino_weight * dino_variability) + (clip_weight * clip_variability)
+
+    # Step 7: Use initial consistency to track progress
+    if initial_consistency is None:
+        initial_consistency = combined_similarity
+
+    # Calculate improvement over initial consistency
+    improvement = combined_similarity - initial_consistency
+
+    return combined_similarity, improvement, combined_variability
 
 
 def extract_character(image):
@@ -146,6 +163,11 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
     args.kmeans_center = int(args.num_of_generated_img / args.dsize_c)
     init_dist = 0
 
+    previous_consistency = None
+    improvement_threshold = 0.001  # Small required improvement over previous iteration
+    stability_iterations = 3  # Require at least 3 stable iterations to converge
+    stable_count = 0
+
     for loop in range(start_from, loop_num):
         print(f"Starting loop {loop}/{loop_num - 1}")
 
@@ -205,22 +227,30 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
             cohesive_cluster_images[i].save(os.path.join(args.train_data_dir_per_loop, f"image_{sample_id + 1}.png"))
 
         # Calculate combined similarity for character consistency
-        character_consistency = compute_character_consistency(dinov2, clip_model, clip_processor, cohesive_cluster_images)
-        
-        del pipe
-        del dinov2
-        torch.cuda.empty_cache()
+        character_consistency, improvement, variability = compute_character_consistency(
+            dinov2, clip_model, clip_processor, cohesive_cluster_images, previous_consistency, iteration=loop
+        )
 
-        # Check if the character consistency meets the threshold for convergence
         print(f"Character Consistency for loop {loop}: {character_consistency}")
+        print(f"Improvement over previous consistency: {improvement}")
+        print(f"Cluster Variability: {variability}")
 
-        if character_consistency > args.character_consistency_threshold:
-            print(f"Converged based on character consistency at loop {loop}.")
-            break  # Exit the loop if convergence is reached
+        # If improvement is less than threshold, start counting stable iterations
+        if improvement < improvement_threshold:
+            stable_count += 1
+            print(f"Stability count: {stable_count}/{stability_iterations}")
+        else:
+            stable_count = 0
 
-        # Fine-tune the model with the cohesive cluster
-        args.character_consistency = character_consistency
+
         fine_tune_model(args, loop)
+        
+        # If we have achieved sufficient stable iterations, declare convergence
+        if stable_count >= stability_iterations:
+            print(f"Converged based on stability at loop {loop}.")
+            break
+        
+        previous_consistency = character_consistency
 
         print(f"[{loop}/{loop_num-1}] Finish.")
         torch.cuda.empty_cache()
