@@ -84,7 +84,7 @@ imagenet_style_templates_small = [
 
 def save_progress(text_encoder, placeholder_token_ids, accelerator, args, save_path, safe_serialization=True):
     """Save the learned embeddings during training."""
-    logger.info("Saving embeddings")
+    print("Saving embeddings")
     learned_embeds = (
         accelerator.unwrap_model(text_encoder)
         .get_input_embeddings()
@@ -156,7 +156,7 @@ def fine_tune_model(args, loop):
     logging_dir = os.path.join(args.output_dir, args.logging_dir)
     args.train_data_dir = args.train_data_dir_per_loop
 
-    logger.info(f"Starting fine-tuning for loop {loop}...")
+    print(f"Starting fine-tuning for loop {loop}...")
 
     accelerator_project_config = ProjectConfiguration(project_dir=args.output_dir, logging_dir=logging_dir)
     kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
@@ -346,7 +346,7 @@ def fine_tune_model(args, loop):
                 optimizer.zero_grad()
 
     # Save the model after training
-    logger.info(f"Training for loop finished, saving model...")
+    print(f"Training for loop finished, saving model...")
     save_path = os.path.join(args.output_dir, f"checkpoint-loop-{args.loop}")
     accelerator.save_state(save_path)
 
@@ -358,7 +358,7 @@ def fine_tune_model(args, loop):
         text_encoder_2_lora_layers=text_encoder_lora_state_dict(text_encoder_two),
     )
 
-    logger.info(f"Model saved at {save_path}.")
+    print(f"Model saved at {save_path}.")
 
 
 class TextualInversionDataset(torch.utils.data.Dataset):
