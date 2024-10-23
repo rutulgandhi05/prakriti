@@ -29,6 +29,7 @@ from PIL import Image
 
 logger = get_logger(__name__)
 
+
 # Define the templates for generating textual inversion prompts
 imagenet_templates_small = [
     "a photo of a {}",
@@ -405,4 +406,5 @@ class TextualInversionDataset(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     args = config_2_args("thechosenone/config/captain.yaml")
+    args.revision=None
     fine_tune_model(args)
