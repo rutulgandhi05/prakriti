@@ -242,6 +242,7 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
         else:
             stable_count = 0
 
+        args.character_consistency = character_consistency
 
         fine_tune_model(args, loop)
         
