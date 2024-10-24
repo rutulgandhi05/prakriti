@@ -174,8 +174,8 @@ def fine_tune_model(args, loop):
     tokenizer_two = AutoTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer_2",  use_fast=False)
 
     # Load the text encoders
-    text_encoder_cls_one = import_model_class_from_model_name_or_path(args.pretrained_model_name_or_path)
-    text_encoder_cls_two = import_model_class_from_model_name_or_path(args.pretrained_model_name_or_path, subfolder="text_encoder_2")
+    text_encoder_cls_one = import_model_class_from_model_name_or_path(args.pretrained_model_name_or_path, revision=None)
+    text_encoder_cls_two = import_model_class_from_model_name_or_path(args.pretrained_model_name_or_path, subfolder="text_encoder_2", revision=None)
 
     text_encoder_one = text_encoder_cls_one.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder")
     text_encoder_two = text_encoder_cls_two.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder_2")
