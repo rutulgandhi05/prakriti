@@ -322,7 +322,7 @@ def fine_tune_model(args, loop):
 
         for batch in train_dataloader:
             with accelerator.accumulate(unet):
-                pixel_values = batch["pixel_values"].to(dtype=weight_dtype)
+                pixel_values = batch["pixel_values"].to(dtype=torch.float32)
 
                 model_input = vae.encode(pixel_values).latent_dist.sample() * vae.config.scaling_factor
 
