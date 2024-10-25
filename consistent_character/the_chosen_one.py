@@ -332,7 +332,7 @@ def fine_tune_model(args, loop):
                     0, 1000, (model_input.shape[0],), device=model_input.device
                 ).long()
 
-                noisy_model_input = DDPMScheduler.add_noise(model_input, noise, timesteps)
+                noisy_model_input = DDPMScheduler.add_noise(original_samples=model_input, noise=noise, timesteps=timesteps)
 
                 # Use added conditions
                 unet_added_conditions = {
@@ -342,7 +342,7 @@ def fine_tune_model(args, loop):
                     noisy_model_input, timesteps, prompt_embeds=batch["text_embeds"], added_cond_kwargs=unet_added_conditions
                 ).sample
 
-                target = noise if DDPMScheduler.config.prediction_type == "epsilon" else DDPMScheduler.get_velocity(model_input, noise, timesteps)
+                target = noise if DDPMScheduler.config.prediction_type == "epsilon" else DDPMScheduler.get_velocity(sample=model_input, noise=noise, timesteps=timesteps)
                 loss = F.mse_loss(model_pred.float(), target.float())
 
                 accelerator.backward(loss)
