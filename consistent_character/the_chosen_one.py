@@ -180,6 +180,8 @@ def fine_tune_model(args, loop):
         kwargs_handlers=[kwargs],
     )
 
+    ddpm_scheduler = DDPMScheduler()
+
     # Set up tokenizers
     tokenizer_one = AutoTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer", use_fast=False)
     tokenizer_two = AutoTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer_2",  use_fast=False)
@@ -325,14 +327,13 @@ def fine_tune_model(args, loop):
                 pixel_values = batch["pixel_values"].to(dtype=torch.float32)
 
                 model_input = vae.encode(pixel_values).latent_dist.sample() * vae.config.scaling_factor
-                print(DDPMScheduler.config)
 
                 noise = torch.randn_like(model_input)
                 timesteps = torch.randint(
                     0, 1000, (model_input.shape[0],), device=model_input.device
                 ).long()
 
-                noisy_model_input = DDPMScheduler.add_noise(original_samples=model_input, noise=noise, timesteps=timesteps)
+                noisy_model_input = ddpm_scheduler.add_noise(original_samples=model_input, noise=noise, timesteps=timesteps)
 
                 # Use added conditions
                 unet_added_conditions = {
@@ -342,7 +343,7 @@ def fine_tune_model(args, loop):
                     noisy_model_input, timesteps, prompt_embeds=batch["text_embeds"], added_cond_kwargs=unet_added_conditions
                 ).sample
 
-                target = noise if DDPMScheduler.config.prediction_type == "epsilon" else DDPMScheduler.get_velocity(sample=model_input, noise=noise, timesteps=timesteps)
+                target = noise if ddpm_scheduler.config.prediction_type == "epsilon" else ddpm_scheduler.get_velocity(sample=model_input, noise=noise, timesteps=timesteps)
                 loss = F.mse_loss(model_pred.float(), target.float())
 
                 accelerator.backward(loss)
