@@ -325,10 +325,11 @@ def fine_tune_model(args, loop):
                 pixel_values = batch["pixel_values"].to(dtype=torch.float32)
 
                 model_input = vae.encode(pixel_values).latent_dist.sample() * vae.config.scaling_factor
+                print(DDPMScheduler.config)
 
                 noise = torch.randn_like(model_input)
                 timesteps = torch.randint(
-                    0, DDPMScheduler.config.num_train_timesteps, (model_input.shape[0],), device=model_input.device
+                    0, 1000, (model_input.shape[0],), device=model_input.device
                 ).long()
 
                 noisy_model_input = DDPMScheduler.add_noise(model_input, noise, timesteps)
