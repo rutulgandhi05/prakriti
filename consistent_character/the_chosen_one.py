@@ -6,7 +6,6 @@
 import argparse
 import os
 import random
-
 import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
@@ -25,61 +24,31 @@ from diffusers.optimization import get_scheduler
 
 from PIL import Image
 
-
-
 logger = get_logger(__name__)
-
 
 # Define the templates for generating textual inversion prompts
 imagenet_templates_small = [
-    "a photo of a {}",
-    "a rendering of a {}",
-    "a cropped photo of the {}",
-    "the photo of a {}",
-    "a photo of a clean {}",
-    "a photo of a dirty {}",
-    "a dark photo of the {}",
-    "a photo of my {}",
-    "a photo of the cool {}",
-    "a close-up photo of a {}",
-    "a bright photo of the {}",
-    "a cropped photo of a {}",
-    "a photo of the {}",
-    "a good photo of the {}",
-    "a photo of one {}",
-    "a close-up photo of the {}",
-    "a rendition of the {}",
-    "a photo of the clean {}",
-    "a rendition of a {}",
-    "a photo of a nice {}",
-    "a good photo of a {}",
-    "a photo of the nice {}",
-    "a photo of the small {}",
-    "a photo of the weird {}",
-    "a photo of the large {}",
-    "a photo of a cool {}",
-    "a photo of a small {}",
+    "a photo of a {}", "a rendering of a {}", "a cropped photo of the {}",
+    "the photo of a {}", "a photo of a clean {}", "a photo of a dirty {}",
+    "a dark photo of the {}", "a photo of my {}", "a photo of the cool {}",
+    "a close-up photo of a {}", "a bright photo of the {}", "a cropped photo of a {}",
+    "a photo of the {}", "a good photo of the {}", "a photo of one {}",
+    "a close-up photo of the {}", "a rendition of the {}", "a photo of the clean {}",
+    "a rendition of a {}", "a photo of a nice {}", "a good photo of a {}",
+    "a photo of the nice {}", "a photo of the small {}", "a photo of the weird {}",
+    "a photo of the large {}", "a photo of a cool {}", "a photo of a small {}",
 ]
 
 imagenet_style_templates_small = [
-    "a painting in the style of {}",
-    "a rendering in the style of {}",
-    "a cropped painting in the style of {}",
-    "the painting in the style of {}",
-    "a clean painting in the style of {}",
-    "a dirty painting in the style of {}",
-    "a dark painting in the style of {}",
-    "a picture in the style of {}",
-    "a cool painting in the style of {}",
-    "a close-up painting in the style of {}",
-    "a bright painting in the style of {}",
-    "a cropped painting in the style of {}",
-    "a good painting in the style of {}",
-    "a close-up painting in the style of {}",
-    "a rendition in the style of {}",
-    "a nice painting in the style of {}",
-    "a small painting in the style of {}",
-    "a weird painting in the style of {}",
+    "a painting in the style of {}", "a rendering in the style of {}",
+    "a cropped painting in the style of {}", "the painting in the style of {}",
+    "a clean painting in the style of {}", "a dirty painting in the style of {}",
+    "a dark painting in the style of {}", "a picture in the style of {}",
+    "a cool painting in the style of {}", "a close-up painting in the style of {}",
+    "a bright painting in the style of {}", "a cropped painting in the style of {}",
+    "a good painting in the style of {}", "a close-up painting in the style of {}",
+    "a rendition in the style of {}", "a nice painting in the style of {}",
+    "a small painting in the style of {}", "a weird painting in the style of {}",
     "a large painting in the style of {}",
 ]
 
@@ -96,7 +65,6 @@ def save_progress(text_encoder, placeholder_token_ids, accelerator, args, save_p
     if safe_serialization:
         torch.save(learned_embeds_dict, save_path)
 
-
 def config_2_args(path):
     """Load and parse the config YAML into args for training."""
     import yaml
@@ -109,7 +77,6 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-
 def import_model_class_from_model_name_or_path(
     pretrained_model_name_or_path: str, revision: str, subfolder: str = "text_encoder"
 ):
@@ -120,17 +87,12 @@ def import_model_class_from_model_name_or_path(
 
     if model_class == "CLIPTextModel":
         from transformers import CLIPTextModel
-
         return CLIPTextModel
     elif model_class == "CLIPTextModelWithProjection":
         from transformers import CLIPTextModelWithProjection
-
         return CLIPTextModelWithProjection
     else:
         raise ValueError(f"{model_class} is not supported.")
-
-
-
 
 def adjust_learning_rate(optimizer, character_consistency, threshold, high_lr, low_lr):
     """Dynamically adjust the learning rate based on character consistency."""
@@ -143,13 +105,11 @@ def adjust_learning_rate(optimizer, character_consistency, threshold, high_lr, l
             param_group['lr'] = low_lr
         print(f"Character consistency above threshold. Using lower learning rate: {low_lr}")
 
-
 def unet_attn_processors_state_dict(unet):
     """
     Returns a state dict containing just the attention processor parameters from the UNet.
     """
     attn_processors = unet.attn_processors
-
     attn_processors_state_dict = {}
 
     for attn_processor_key, attn_processor in attn_processors.items():
@@ -157,7 +117,6 @@ def unet_attn_processors_state_dict(unet):
             attn_processors_state_dict[f"{attn_processor_key}.{parameter_key}"] = parameter
 
     return attn_processors_state_dict
-
 
 def fine_tune_model(args, loop):
     """
@@ -193,7 +152,7 @@ def fine_tune_model(args, loop):
     text_encoder_one = text_encoder_cls_one.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder")
     text_encoder_two = text_encoder_cls_two.from_pretrained(args.pretrained_model_name_or_path, subfolder="text_encoder_2")
 
-    vae = AutoencoderKL.from_pretrained(args.pretrained_model_name_or_path, subfolder="vae" )
+    vae = AutoencoderKL.from_pretrained(args.pretrained_model_name_or_path, subfolder="vae")
     unet = UNet2DConditionModel.from_pretrained(args.pretrained_model_name_or_path, subfolder="unet")
 
     # Placeholder tokens and embeddings setup
@@ -206,11 +165,6 @@ def fine_tune_model(args, loop):
 
     token_ids_one = tokenizer_one.convert_tokens_to_ids(placeholder_tokens)
     token_ids_two = tokenizer_two.convert_tokens_to_ids(placeholder_tokens)
-
-    # Check if initializer_token is a single token or a sequence of tokens
-    if len(token_ids_one) > 1:
-        raise ValueError("The initializer token must be a single token.")
-
 
     # Resize token embeddings
     text_encoder_one.resize_token_embeddings(len(tokenizer_one))
@@ -226,7 +180,6 @@ def fine_tune_model(args, loop):
         for token_id in token_ids_two:
             token_embeds_two[token_id] = token_embeds_two[token_ids_two[0]].clone()
 
-
     weight_dtype = torch.float32
     if accelerator.mixed_precision == "fp16":
         weight_dtype = torch.float16
@@ -238,17 +191,12 @@ def fine_tune_model(args, loop):
     text_encoder_one.to(accelerator.device, dtype=weight_dtype)
     text_encoder_two.to(accelerator.device, dtype=weight_dtype)
 
-
-
     # Insert LoRA layers into the attention modules of UNet
     unet_lora_parameters = []
     for attn_processor_name, attn_processor in unet.attn_processors.items():
         attn_module = unet
-        # Traverse through the module names to reach the target layer (e.g., to_q, to_k, to_v)
         for n in attn_processor_name.split(".")[:-1]:
             attn_module = getattr(attn_module, n)
-
-        # Set LoRA layers for each attention module (to_q, to_k, to_v, to_out)
         attn_module.to_q.set_lora_layer(LoRALinearLayer(attn_module.to_q.in_features, attn_module.to_q.out_features, rank=args.rank))
         attn_module.to_k.set_lora_layer(LoRALinearLayer(attn_module.to_k.in_features, attn_module.to_k.out_features, rank=args.rank))
         attn_module.to_v.set_lora_layer(LoRALinearLayer(attn_module.to_v.in_features, attn_module.to_v.out_features, rank=args.rank))
@@ -278,12 +226,10 @@ def fine_tune_model(args, loop):
         eps=args.adam_epsilon
     )
 
-    
-    # Optimizer setup with dynamic learning rate adjustment
+    # Dynamic learning rate adjustment
     high_lr = args.high_learning_rate
     low_lr = args.low_learning_rate
     threshold = args.consistency_threshold
-
 
     # Training data setup
     train_dataset = TextualInversionDataset(
@@ -335,12 +281,8 @@ def fine_tune_model(args, loop):
 
                 noisy_model_input = ddpm_scheduler.add_noise(original_samples=model_input, noise=noise, timesteps=timesteps)
 
-                # Use added conditions
-                unet_added_conditions = {
-                    "added_cond_kwargs": batch["text_embeds"]
-                }
-                
-                model_pred = unet(noisy_model_input, timesteps, encoder_hidden_states=batch["text_embeds"] ).sample
+                # Directly pass encoder_hidden_states without added_cond_kwargs
+                model_pred = unet(noisy_model_input, timesteps, encoder_hidden_states=batch["text_embeds"]).sample
 
                 target = noise if ddpm_scheduler.config.prediction_type == "epsilon" else ddpm_scheduler.get_velocity(sample=model_input, noise=noise, timesteps=timesteps)
                 loss = F.mse_loss(model_pred.float(), target.float())
@@ -355,7 +297,7 @@ def fine_tune_model(args, loop):
     save_path = os.path.join(args.output_dir, f"checkpoint-loop-{args.loop}")
     accelerator.save_state(save_path)
 
-     # Save LoRA layers after training
+    # Save LoRA layers after training
     StableDiffusionXLPipeline.save_lora_weights(
         save_directory=args.output_dir,
         unet_lora_layers=unet_attn_processors_state_dict(unet),
@@ -364,7 +306,6 @@ def fine_tune_model(args, loop):
     )
 
     print(f"Model saved at {save_path}.")
-
 
 class TextualInversionDataset(torch.utils.data.Dataset):
     """
@@ -402,13 +343,15 @@ class TextualInversionDataset(torch.utils.data.Dataset):
         input_ids_one = self.tokenizer_one(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
         input_ids_two = self.tokenizer_two(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
 
+        # Concatenate or select one embedding depending on model requirements
+        text_embeds = torch.cat([input_ids_one, input_ids_two], dim=-1) if args.use_dual_tokenizers else input_ids_one
+
         return {
             "pixel_values": image,
-            "text_embeds": (input_ids_one, input_ids_two),
+            "text_embeds": text_embeds,
         }
-
 
 if __name__ == "__main__":
     args = config_2_args("thechosenone/config/captain.yaml")
-    args.revision=None
+    args.revision = None
     fine_tune_model(args)
