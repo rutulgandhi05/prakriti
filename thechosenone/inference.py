@@ -45,7 +45,7 @@ def generate_game_image(prompt, config_path="thechosenone/config/captain.yaml", 
     return image
 
 
-def loop_inference(loop):
+def loop_inference(loop, prompt_postfix):
     args = config_2_args("thechosenone/config/captain.yaml")
 
     model_path = os.path.join(args.output_dir, args.character_name, str(loop))
@@ -53,21 +53,24 @@ def loop_inference(loop):
     pipe.to("cuda")
     pipe.load_lora_weights(os.path.join(model_path, f"checkpoint-{args.checkpointing_steps * args.num_train_epochs}"))
 
-    prompt_postfix = "holding a magic wand"
+    prompt_postfix = prompt_postfix
     image_postfix = prompt_postfix.replace(" ", "_")
 
     # create folder
-    output_folder = f"data/inference_results/{args.character_name}"
+    output_folder = f"data/inference_results/{args.character_name}/{loop}"
     os.makedirs(output_folder, exist_ok=True)
 
     # remember to use the place holader here
     prompt = f"A realistic photo of {args.placeholder_token}{prompt_postfix}."
-    image = pipe(prompt, num_inference_steps=35, guidance_scale=7.5).images[0]
+    image = pipe(prompt, num_inference_steps=35, guidance_scale=7.0).images[0]
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
 
 if __name__ == "__main__":
+    prompt_postfixs = ["riding a horse", "standing infront of castle", "holding a red flag", "sitting on a bench", "holding a sword"]
+
     for i in range(5):
-        loop_inference(i)
+        for prompt_postfix in prompt_postfixs:
+            loop_inference(i, prompt_postfix)
 
         
