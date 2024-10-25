@@ -339,8 +339,8 @@ def fine_tune_model(args, loop):
                 unet_added_conditions = {
                     "added_cond_kwargs": batch["text_embeds"]
                 }
-                model_pred = unet(
-                    noisy_model_input, timesteps, **unet_added_conditions).sample
+                
+                model_pred = unet(noisy_model_input, timesteps, encoder_hidden_states=batch["text_embeds"] ).sample
 
                 target = noise if ddpm_scheduler.config.prediction_type == "epsilon" else ddpm_scheduler.get_velocity(sample=model_input, noise=noise, timesteps=timesteps)
                 loss = F.mse_loss(model_pred.float(), target.float())
