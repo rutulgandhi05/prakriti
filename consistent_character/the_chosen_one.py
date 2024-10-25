@@ -118,6 +118,52 @@ def unet_attn_processors_state_dict(unet):
 
     return attn_processors_state_dict
 
+
+class TextualInversionDataset(torch.utils.data.Dataset):
+    """
+    Dataset for textual inversion fine-tuning.
+    """
+    def __init__(self, args, data_root, tokenizer_one, tokenizer_two, size, placeholder_token, repeats=100, learnable_property="object", center_crop=False, set="train"):
+        self.args = args
+        self.data_root = data_root
+        self.tokenizer_one = tokenizer_one
+        self.tokenizer_two = tokenizer_two
+        self.placeholder_token = placeholder_token
+        self.center_crop = center_crop
+        self.size = size
+        self.repeats = repeats
+
+        self.image_paths = [os.path.join(data_root, file_path) for file_path in os.listdir(data_root)]
+        self.num_images = len(self.image_paths)
+
+        self.templates = imagenet_templates_small if learnable_property == "object" else imagenet_style_templates_small
+        self.flip_transform = transforms.RandomHorizontalFlip(p=0.5)
+
+    def __len__(self):
+        return self.num_images * self.repeats
+
+    def __getitem__(self, index):
+        image = Image.open(self.image_paths[index % self.num_images])
+
+        if self.center_crop:
+            image = transforms.CenterCrop(self.size)(image)
+        else:
+            image = transforms.RandomResizedCrop(self.size)(image)
+        image = transforms.ToTensor()(image)
+
+        text = random.choice(self.templates).format(self.placeholder_token)
+        input_ids_one = self.tokenizer_one(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
+        input_ids_two = self.tokenizer_two(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
+
+        # Concatenate or select one embedding depending on model requirements
+        text_embeds = torch.cat([input_ids_one, input_ids_two], dim=-1) if args.use_dual_tokenizers else input_ids_one
+
+        return {
+            "pixel_values": image,
+            "text_embeds": text_embeds,
+        }
+
+
 def fine_tune_model(args, loop):
     """
     Fine-tune the model on the provided training data.
@@ -307,49 +353,6 @@ def fine_tune_model(args, loop):
 
     print(f"Model saved at {save_path}.")
 
-class TextualInversionDataset(torch.utils.data.Dataset):
-    """
-    Dataset for textual inversion fine-tuning.
-    """
-    def __init__(self, args, data_root, tokenizer_one, tokenizer_two, size, placeholder_token, repeats=100, learnable_property="object", center_crop=False, set="train"):
-        self.args = args
-        self.data_root = data_root
-        self.tokenizer_one = tokenizer_one
-        self.tokenizer_two = tokenizer_two
-        self.placeholder_token = placeholder_token
-        self.center_crop = center_crop
-        self.size = size
-        self.repeats = repeats
-
-        self.image_paths = [os.path.join(data_root, file_path) for file_path in os.listdir(data_root)]
-        self.num_images = len(self.image_paths)
-
-        self.templates = imagenet_templates_small if learnable_property == "object" else imagenet_style_templates_small
-        self.flip_transform = transforms.RandomHorizontalFlip(p=0.5)
-
-    def __len__(self):
-        return self.num_images * self.repeats
-
-    def __getitem__(self, index):
-        image = Image.open(self.image_paths[index % self.num_images])
-
-        if self.center_crop:
-            image = transforms.CenterCrop(self.size)(image)
-        else:
-            image = transforms.RandomResizedCrop(self.size)(image)
-        image = transforms.ToTensor()(image)
-
-        text = random.choice(self.templates).format(self.placeholder_token)
-        input_ids_one = self.tokenizer_one(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
-        input_ids_two = self.tokenizer_two(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
-
-        # Concatenate or select one embedding depending on model requirements
-        text_embeds = torch.cat([input_ids_one, input_ids_two], dim=-1) if args.use_dual_tokenizers else input_ids_one
-
-        return {
-            "pixel_values": image,
-            "text_embeds": text_embeds,
-        }
 
 if __name__ == "__main__":
     args = config_2_args("thechosenone/config/captain.yaml")
