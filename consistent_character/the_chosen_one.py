@@ -362,9 +362,7 @@ def fine_tune_model(args, loop):
 
                 
 
-                model_pred = unet(
-                    noisy_model_input, timesteps, added_cond_kwargs={"text_embeds": batch["text_embeds"]}
-                ).sample
+                model_pred = unet(noisy_model_input, timesteps, added_cond_kwargs={"text_embeds": batch["text_embeds"]}, encoder_hidden_states = None).sample
 
 
                 target = noise if ddpm_scheduler.config.prediction_type == "epsilon" else ddpm_scheduler.get_velocity(sample=model_input, noise=noise, timesteps=timesteps)
