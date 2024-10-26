@@ -181,7 +181,7 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
                 model_path=os.path.join(output_dir_base, args.character_name, str(loop - 1)),
                 load_lora=True,
                 lora_path=os.path.join(output_dir_base, args.character_name, str(loop - 1),
-                                       f"checkpoint-{checkpointing_steps * num_train_epochs}")
+                                       f"checkpoint-loop-{str(loop - 1)}")
             )
 
         args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop))
