@@ -69,7 +69,7 @@ def loop_inference(loop, prompt_postfix):
 if __name__ == "__main__":
     prompt_postfixs = ["riding a horse", "standing infront of castle", "holding a red flag", "sitting on a bench", "holding a sword"]
 
-    for i in range(5):
+    for i in range(10):
         for prompt_postfix in prompt_postfixs:
             loop_inference(i, prompt_postfix)
 
