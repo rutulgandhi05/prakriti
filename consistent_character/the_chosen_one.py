@@ -189,7 +189,7 @@ class TextualInversionDataset(torch.utils.data.Dataset):
         input_ids_two = self.tokenizer_two(text, return_tensors="pt", padding="max_length", truncation=True).input_ids[0]
 
         # Concatenate or select one embedding depending on model requirements
-        text_embeds = torch.cat([input_ids_one, input_ids_two], dim=-1) if args.use_dual_tokenizers else input_ids_one
+        text_embeds = torch.cat([input_ids_one, input_ids_two], dim=-1) if self.args.use_dual_tokenizers else input_ids_one
 
         return {
             "pixel_values": image,

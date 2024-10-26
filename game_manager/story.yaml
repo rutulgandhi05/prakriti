@@ -1,81 +1,68 @@
+intro: |
+  You find yourself in a mysterious realm known as Eldoria, a land of magic and mystery. You are an adventurer, chosen to undertake a perilous journey that could shape the future of this world. Your choices will determine the fate of the inhabitants and yourself.
+
 player:
-  name: "Alex the Brave"
-  backstory: "Once a soldier, now seeking redemption in a war-torn land."
-
-
-intro: "You Alex the Brave reach the town of Blackmoor. Blackmoor is gripped by a curse. Each night, mysterious creatures attack, and townsfolk have been disappearing. The townspeople whisper that this is the work of the Cursed Witch of the Woods, a figure long thought to be a legend."
-
+  id: 1
+  name: "Arin the Wanderer"
+  profession: "Explorer"
+  backstory: "A seasoned traveler who has roamed lands far and wide, seeking knowledge and relics."
+  current_state: "curious"
+  inventory: ["Map of Eldoria", "Old Compass"]
 
 npcs:
-  1:
-    name: Captain Merrick
-    profession: Guard Captain of Blackmoor
-    temperament: Brave, skeptical of magic, loyal to the town.
-    backstory: Captain Merrick has served as the leader of Blackmoor’s guards for many years. He’s a man of duty and honor, more comfortable with his sword than with the town’s growing superstition about the curse. He does not believe in magic and prefers practical solutions to problems, though the recent events in the town have shaken his confidence.
-    current_state: Neutral (Worried about the safety of Blackmoor but unsure how to deal with the supernatural threat).
-    goals: ["Protect the townspeople.", "Find a rational explanation for the disappearances."]
-    relationship_level: Neutral (Can improve if the player helps him uncover the truth).
-    personality_traits: Practical, courageous, authoritative. Respects actions over words and dislikes indecision.
-  2:
-    name: Lira 
-    profession: Herbalist and local healer
-    temperament: Mysterious, cautious, secretive.
-    backstory: Lira is a reclusive figure who lives on the outskirts of Blackmoor. She’s known for her vast knowledge of herbs and remedies, but rumors say she knows far more about the curse than she lets on. Lira is deeply tied to the land and its ancient magic, though she keeps this knowledge hidden from most townsfolk to avoid suspicion.
-    current_state:  Neutral (She is hesitant to trust outsiders but may open up if the player is respectful).
-    goals: ["Keep her true knowledge of the curse secret unless absolutely necessary.", "Help the player uncover the truth, but only if they approach her respectfully."]
-    relationship_level: Neutral, with the potential to become an ally if the player seeks her wisdom instead of using force.
-    personality_traits: Knowledgeable, patient, secretive. Prefers to work behind the scenes and values subtlety and respect.
-  3:
-    name: Old Man Calen 
-    profession: Hermit (Former Scholar)
-    temperament: Erratic, paranoid, insightful.
-    backstory: Once a respected scholar, Calen ventured into the Blackmoor Forest many years ago to study the ruins hidden deep within. He returned a changed man, raving about a curse and the Witch of the Woods. Now considered mad by most townsfolk, he lives as a hermit on the edge of town, muttering to himself and watching the forest.
-    current_state: Paranoid and fearful (Believes the curse is real and feels it closing in).
-    goals: ["Warn the player about the curse.", "Get the player to believe his story about the Witch of the Woods.", "Survive whatever is coming."]
-    relationship_level:  Initially low, but can improve if the player listens to his warnings and helps him.
-    personality_traits: Knowledgeable, patient, secretive. Prefers to work behind the scenes and values subtlety and respect.
-  4:
-    name: Mayor Balthas
-    profession: Mayor of Blackmoor
-    temperament: Charismatic, controlling, manipulative.
-    backstory: Mayor Balthas is a shrewd politician who keeps a tight grip on Blackmoor. He has kept the town safe from outside threats by making a secret pact with a demon, exchanging power for protection. Balthas denies the existence of any curse, claiming it is a fabrication to discredit him. In truth, the curse is a result of the demon's influence growing out of control.
-    current_state: Deceptive (He is hiding his connection to the curse and the demon, while pretending to be a concerned leader).
-    goals: ["Maintain his power over the town.", "Conceal the truth about the demon pact.", "Ensure the player doesn’t uncover his secret."]
-    relationship_level:  Initially positive (sees the player as a tool to manipulate), but will turn hostile if the player uncovers his secret.
-    personality_traits: Manipulative, charismatic, ambitious. Uses charm to get what he wants but turns vicious when his control is threatened.
-  5:
-    name: "The Demon"
-    profession: "Demon bound to an ancient pact"
-    temperament:" Malevolent, cunning, manipulative."
-    backstory: "The Demon was bound centuries ago by an ancient pact with the rulers of Eridell, sealed within the Forgotten Ruins. Mayor Balthas recently rediscovered this pact and used the demon’s power to keep Blackmoor safe from outside threats. However, the demon's influence has begun leaking into the town, causing the curse. It now seeks to break free and expand its control beyond Blackmoor."
-    current_state: "Growing in strength (As the curse spreads, the demon gains power and influence over Blackmoor)."
-    goals: ["Break free from its ancient bonds.", "Corrupt Blackmoor and spread its influence throughout the kingdom.", "Manipulate the player into either serving it or allowing it to escape."]
-    relationship_level: "Neutral but can become an ally if the player chooses to strike a deal with it."
-    personality_traits: "Cunning, manipulative, patient. It plays the long game, knowing that its influence grows with every corrupted soul."
-  6:
-    name: "Granthor"
-    profession: "Blacksmith of Blackmoor"
-    temperament: "Loyal, stubborn, hardworking."
-    backstory: "Granthor is a well-known and respected blacksmith in Blackmoor. He has worked with Mayor Balthas for years and believes in the Mayor’s ability to keep the town safe. However, he is unaware of the Mayor’s dark secret and is conflicted by the strange events occurring in the town. Granthor could be persuaded to help the player if they earn his trust."
-    current_state:  "Loyal to the Mayor but suspicious of recent events."
-    goals: ["Protect his family and the town.", "Continue to trust in the Mayor unless proven otherwise."]
-    personality_traits: "Loyal, hardworking, honorable. Granthor values action and integrity but is slow to change his beliefs.Loyal, hardworking, honorable. Granthor values action and integrity but is slow to change his beliefs."
+  - id: 1
+    name: "Eldon the Wise"
+    profession: "Sage"
+    temperament: "Patient"
+    personality_traits: ["wise", "calm", "mysterious"]
+    backstory: |
+      Eldon has lived in Eldoria for centuries, watching over the land and its secrets. He knows the lore of ancient civilizations and holds knowledge that only a few have glimpsed.
+    current_state: "observant"
+    relationship_level: 0
 
-
+  - id: 2
+    name: "Lira the Brave"
+    profession: "Warrior"
+    temperament: "Fiery"
+    personality_traits: ["brave", "impulsive", "loyal"]
+    backstory: |
+      A fierce protector of Eldoria, Lira defends her home and people with unwavering courage. Her fiery spirit sometimes puts her at odds with others, but her loyalty is unquestionable.
+    current_state: "guarded"
+    relationship_level: -1
 
 quests:
-  1:
-    name: "The Blackmoor Curse"
-    description: "The player is asked by Captain Merrick to investigate the disappearances and find the cause of the curse. The quest begins with the player investigating the town and questioning the townsfolk, gathering clues that lead them into the nearby Blackmoor Forest."
-    objectives: ["Investigate Town", "Forest Exploration", "Encounter with the Witch"]
-    npcs: ["Captain Merrick" , "Lira", "Old Man Calen"]
-  2:
-    name: “The Mayor’s Secret”
-    description: "After uncovering the truth about the curse, the player learns that the town's Mayor Balthas has been concealing dark secrets. There are rumors that he made a pact with a demon in exchange for power and protection from the surrounding kingdom’s army. The player is tasked with investigating the Mayor’s Manor to uncover the truth. The manor is heavily guarded, and the player must either sneak in or find an alternative way to gain access. Inside, the player discovers evidence of the mayor’s pact and the truth about the curse: it was the result of the demon’s power leaking into the town."
-    objectives: ["Investigate the Manor", "Confrontation with the Mayor" ]
-    npcs: ["Mayor Balthas" , "Granthor", "The Demon"]
-  3:
-    name: “The Demon’s Reckoning”
-    description: "With the Mayor exposed or gone, the player now faces the real threat: the demon that has been feeding on the souls of the townsfolk. The demon has gained enough strength to begin corrupting the nearby region. The player is tasked with venturing into the Forgotten Ruins, a long-abandoned temple where the demon is gathering power. This final confrontation will determine the fate of Blackmoor and the player’s moral standing."
-    objectives: ["Journey to the Ruins", "The Final Battle" ]
-    npcs: ["The Demon" , "Lira", "Old Man Calen"]
+  - id: 1
+    name: "The Forgotten Shrine"
+    description: |
+      Legends speak of a shrine hidden deep within the forest, guarded by mystical creatures and ancient wards. The shrine is said to hold a relic with immense power. Eldon believes you might be the one to recover it.
+    objectives:
+      - description: "Locate the forest entrance marked by three ancient trees."
+        condition: "has_map"
+      - description: "Find the hidden path that leads to the shrine, using clues from Eldon."
+        condition: "interacted_with_eldon"
+      - description: "Retrieve the relic from the shrine and return it to Eldon."
+        condition: "relic_retrieved"
+
+  - id: 2
+    name: "Defending the Village"
+    description: |
+      The village of Eldoria is under threat from roaming bandits. Lira has asked for your help to defend the people. Together, you must prepare and hold the defenses.
+    objectives:
+      - description: "Help Lira strengthen the village's defenses."
+        condition: "interacted_with_lira"
+      - description: "Gather supplies from nearby outposts to reinforce defenses."
+        condition: "gathered_supplies"
+      - description: "Stand with Lira to repel the bandit attack."
+        condition: "defeated_bandits"
+
+  - id: 3
+    name: "Unraveling the Past"
+    description: |
+      Eldon has hinted at a hidden truth within the ruins of Eldoria's oldest fortress. The journey is perilous, but the answers might reveal secrets about Eldoria’s ancient lineage.
+    objectives:
+      - description: "Uncover clues about the lost civilization hidden in the fortress."
+        condition: "clues_found"
+      - description: "Piece together the story of Eldoria's ancient inhabitants."
+        condition: "story_pieced"
+      - description: "Present your findings to Eldon, sharing the truth of the past."
+        condition: "findings_shared"
