@@ -2,9 +2,16 @@ import json
 from db_master.db_manager import DatabaseManager
 
 class NPC:
-    def __init__(self, id, name, current_state, profession, temperament, personality_traits, backstory, relationship_level):
+    def __init__(self, id, name, profession, temperament, personality_traits, backstory, relationship_level=0):
         """
-        Initialize an NPC with basic attributes like name, profession, temperament, and backstory.
+        Initializes an NPC with attributes including relationship level, backstory, and temperament.
+        :param id: Unique identifier for the NPC.
+        :param name: Name of the NPC.
+        :param profession: Profession or role of the NPC in the game.
+        :param temperament: General disposition of the NPC (e.g., friendly, cautious).
+        :param personality_traits: List of personality traits describing the NPC.
+        :param backstory: Brief history or background of the NPC.
+        :param relationship_level: Initial relationship level with the player.
         """
         self.id = id
         self.name = name
@@ -12,50 +19,71 @@ class NPC:
         self.temperament = temperament
         self.personality_traits = personality_traits
         self.backstory = backstory
-        self.current_state = current_state  # Example state that can be modified based on interactions
+        self.current_state = "neutral"
         self.relationship_level = relationship_level  # Relationship level with the player
         self.memory = []  # Stores recent interactions with the player
-        self.goals = []  # Any specific goals or tasks the NPC may have
 
     def remember_interaction(self, interaction):
         """
-        Store the player's action and the NPC's response in memory.
-        Updates the database with the latest memory state.
+        Store the player's action and the NPC's response in memory, adjusting the NPC's relationship level.
+        :param interaction: Dictionary describing the interaction with the player.
         """
         self.memory.append(interaction)
         if len(self.memory) > 3:  # Limit to recent 3 interactions for simplicity
             self.memory.pop(0)
+        self.adjust_relationship(interaction)
         self.add_to_db()
 
-    def add_goal(self, goal):
+    def adjust_relationship(self, interaction):
         """
-        Add a goal to the NPC's list of goals.
+        Adjust the NPC's relationship level based on the type of interaction.
+        :param interaction: Dictionary containing details of the interaction.
         """
-        self.goals.append(goal)
-        self.add_to_db()
+        if "helped" in interaction.get("player_action", "").lower():
+            self.relationship_level += 1
+        elif "argued" in interaction.get("player_action", "").lower():
+            self.relationship_level -= 1
 
-    def get_memory_context(self):
+    def relationship_level_description(self):
+        """Provide descriptive text for the NPC's relationship level with the player."""
+        if self.relationship_level > 5:
+            return "respect and admiration"
+        elif self.relationship_level > 0:
+            return "a friendly demeanor"
+        elif self.relationship_level < 0:
+            return "a cautious tone"
+        else:
+            return "neutrality"
+
+    def generate_conditional_response(self, player_attributes, interaction_history):
         """
-        Generate a context string from the NPC's memory to pass to the LLM.
-        Provides recent player-NPC interaction history.
+        Generate a personalized response based on the player's attributes and past interactions.
+        :param player_attributes: Dictionary of player’s skill attributes (e.g., Wisdom, Courage).
+        :param interaction_history: List of key past interactions with the player.
+        :return: Conditional response string.
         """
-        if not self.memory:
-            return "No prior interactions."
-        
-        memory_str = "Previous interactions:\n"
-        for interaction in self.memory:
-            memory_str += f"Player did: {interaction['player']}, NPC responded: {interaction.get(self.name, '')}\n"
-        
-        return memory_str
+        base_response = f"{self.name} looks at you with {self.relationship_level_description()}."
+
+        # Tailor NPC response based on player attributes
+        if "Wisdom" in player_attributes and player_attributes["Wisdom"] > 5:
+            base_response += " They seem impressed by your insight."
+        if "Courage" in player_attributes and player_attributes["Courage"] > 3:
+            base_response += " They respect your bravery from past encounters."
+
+        # Reference notable past interactions if any
+        if interaction_history:
+            base_response += " They recall your actions during your last encounter and adjust their tone accordingly."
+
+        return base_response
 
     def add_to_db(self):
         """
-        Save the current state of the NPC, including memory and goals, to the database.
+        Save the current state of the NPC, including memory and relationship level, to the database.
         """
         db = DatabaseManager()
         query = '''
-            INSERT OR REPLACE INTO npc (id, name, profession, temperament, backstory, current_state, memory, goals, personality_traits, relationship_level)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT OR REPLACE INTO npc (id, name, profession, temperament, backstory, current_state, memory, personality_traits, relationship_level)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         data = (
             self.id,
@@ -65,55 +93,32 @@ class NPC:
             self.backstory,
             self.current_state,
             json.dumps(self.memory), 
-            json.dumps(self.goals), 
             json.dumps(self.personality_traits),
             self.relationship_level
         )
         db.cursor.execute(query, data)
         db.conn.commit()
 
-    def load_from_db(self, npc_name):
+    def get_memory_context(self):
         """
-        Load an NPC's state from the database based on their name.
+        Generate a context string from the NPC's memory to pass to the LLM.
+        Provides recent player-NPC interaction history.
+        :return: String of recent interactions.
         """
-        db = DatabaseManager()
-        query = "SELECT * FROM npc WHERE name = ?"
-        result = db.cursor.execute(query, (npc_name,)).fetchone()
+        if not self.memory:
+            return "No prior interactions."
         
-        if result:
-            self.id = result['id']
-            self.name = result['name']
-            self.profession = result['profession']
-            self.temperament = result['temperament']
-            self.backstory = result['backstory']
-            self.current_state = result['current_state']
-            self.memory = json.loads(result['memory'])
-            self.goals = json.loads(result['goals'])
-            self.personality_traits = json.loads(result['personality_traits'])
-            self.relationship_level = result['relationship_level']
-
-    def interact(self, player_input, llm):
-        """
-        Generate a response from the NPC based on player input, personality, and memory.
-        Uses LLM to craft a dynamic and personalized response.
-        """
-        prompt = f'''
-        Act as {self.name}, a {self.profession} with a {self.temperament} temperament. 
-        Personality traits: {", ".join(self.personality_traits)}. 
-        NPC Memory: {self.get_memory_context()}.
-        Player action: {player_input}.
-        Respond naturally based on the context and your relationship with the player.
-        '''
-        response = llm.inference(prompt=prompt)
-        interaction = {"player": player_input, self.name: response}
-        self.remember_interaction(interaction)
-        return response
+        memory_str = "Previous interactions:\n"
+        for interaction in self.memory:
+            memory_str += f"Player did: {interaction['player_action']}, NPC responded: {interaction.get(self.name, '')}\n"
+        
+        return memory_str
 
     def __str__(self):
         """
         String representation of the NPC object for easy inspection.
-        :return: A string with NPC details
+        :return: A string with NPC details.
         """
         return (f"NPC: {self.name}, Profession: {self.profession}, Temperament: {self.temperament}, "
-                f"Current State: {self.current_state}, Relationship Level: {self.relationship_level}, "
-                f"Personality Traits: {', '.join(self.personality_traits)}, Memory: {self.get_memory_context()}")
+                f"Relationship Level: {self.relationship_level}, Personality Traits: {', '.join(self.personality_traits)}, "
+                f"Memory: {self.get_memory_context()}")

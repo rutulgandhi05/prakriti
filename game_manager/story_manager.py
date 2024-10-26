@@ -71,7 +71,6 @@ class StoryManager:
                 temperament=npc_info.get('temperament'),
                 personality_traits=npc_info.get('personality_traits', []),
                 backstory=npc_info.get('backstory'),
-                current_state=npc_info.get('current_state', 'neutral'),
                 relationship_level=npc_info.get('relationship_level', 0)
             )
             self.npcs.append(npc)
@@ -83,21 +82,65 @@ class StoryManager:
         intro_text = self.story.get('intro', "The adventure begins...")
         return intro_text
 
-    def play_quest(self, quest_id):
-        """Plays the quest by handling logic, progression, and visuals."""
+    def play_quest(self, quest_id, player_input):
+        """
+        Handles the player input for a quest and generates appropriate responses from the NPCs,
+        including images generated for specific interactions.
+        :param quest_id: ID of the current quest.
+        :param player_input: Input from the player describing their action or choice.
+        :return: List of dictionaries with dialogue and image data for each NPC interaction.
+        """
         quest = next((quest for quest in self.quests if quest.quest_id == quest_id), None)
         
-        if quest:
-            if quest.status == "completed":
-                print(f"Quest '{quest.name}' is already completed.")
-                return
+        if not quest:
+            print("Quest not found.")
+            return []
 
-            # Start the quest if it's not started yet
-            if quest.status == "not_started":
-                quest.start()
-            
-            # Run through the quest objectives
-            self.run_quest(quest)
+        if quest.status == "completed":
+            print(f"Quest '{quest.name}' is already completed.")
+            return []
+
+        # Start the quest if it's not already started
+        if quest.status == "not_started":
+            quest.start()
+        
+        quest_npcs = [npc for npc in self.npcs if npc.name in quest.npcs]
+
+        # Player attributes improvement based on interaction context
+        if "Eldon" in [npc.name for npc in quest_npcs]:
+            self.player.improve_attribute("Wisdom", 2)
+        if "Lira" in [npc.name for npc in quest_npcs]:
+            self.player.improve_attribute("Courage", 1)
+
+        # Initialize response data list for all NPC interactions
+        response_data = []
+
+        for npc in quest_npcs:
+            # Generate an NPC-specific image based on the current player input or NPC state
+            prompt = f"{npc.name} in the setting of {quest.name}, reacting to {player_input}"
+            generated_image = generate_game_image(prompt, character_name=npc.name)
+
+            # Generate conditional dialogue based on attributes and interaction history
+            npc_response = npc.generate_conditional_response(
+                player_attributes=self.player.get_attributes(),
+                interaction_history=npc.memory
+            )
+
+            # Append each interaction with NPC name, dialogue, and generated image
+            response_data.append({"npc": npc.name, "dialogue": npc_response, "image": generated_image})
+
+        # Process player input and dialogue responses
+        dialogue_responses = self.llm.generate_response(
+            quest_name=quest.name,
+            player_action=player_input,
+            player_state=self.player.__dict__,
+            quest_background=quest.description
+        )
+
+        # Check if quest objective is completed
+        quest.update_progress(self.player.__dict__, self.llm)
+
+        return response_data
 
     def run_quest(self, quest):
         """
@@ -116,6 +159,12 @@ class StoryManager:
             npc_memory = "\n".join(npc.get_memory_context() for npc in quest_npcs)
             player_memory = self.player.current_move
 
+            # Improve player skills based on interactions with specific NPCs
+            if "Eldon" in [npc.name for npc in quest_npcs]:
+                self.player.improve_attribute("Wisdom", 2)
+            if "Lira" in [npc.name for npc in quest_npcs]:
+                self.player.improve_attribute("Courage", 1)
+
             # Generate dialogue using the enhanced prompt from LLM
             dialogue_response = self.llm.generate_response(
                 quest_name=quest.name,
@@ -126,65 +175,19 @@ class StoryManager:
                 player_memory=player_memory
             )
 
-            # Process the dialogue response
-            speaker = self.get_speaker(dialogue_response, quest_npcs)
-            dialogue = dialogue_response
-            interaction = {"player": self.player.current_move, speaker.name: dialogue}
-
-            if speaker.name != "Narrator":
-                speaker.remember_interaction(interaction)
-
-            # Generate visual prompt for current scene
-            visual_prompt = f'''
-            Act as a visual prompt designer. 
-            Create a scene prompt for the SDXL model based on current quest state:
-            - Quest details: {quest.__str__()}.
-            - NPCs present: {[npc.__str__() for npc in quest_npcs]}.
-            - Current objective: {current_objective['description']}.
-            Player action: {self.player.current_move}.
-            Only include NPCs visible to the player and describe their poses and environment.
-            '''
-            visual_description = self.llm.inference(prompt=visual_prompt)
-            visual_image = generate_game_image(prompt=visual_description)
-            visual_with_subtitle = self.add_llm_subtitle(image=visual_image, subtitle_text=f"[{speaker.name}]: {dialogue}")
-
-            # Update objective status based on interaction and LLM response
-            if self.check_objective_completed(quest):
-                quest.update_progress(self.player.__dict__, self.llm)
-
-            yield {"dialogue": dialogue, "image": visual_with_subtitle}
-
-    def add_llm_subtitle(self, image, subtitle_text):
-        """Add a subtitle to the generated image."""
-        try:
-            draw = ImageDraw.Draw(image)
-            font = ImageFont.load_default()
-            text_position = (20, image.height - 50)
-            draw.text(text_position, subtitle_text, font=font, fill="white")
-            return image
-        except Exception as e:
-            print(f"Failed to add subtitle: {e}")
-
-    def get_speaker(self, dialogue_response, quest_npcs):
-        """Identify the speaker based on LLM response."""
-        speaker_name = dialogue_response[0]
-        for npc in quest_npcs:
-            if npc.name == speaker_name:
-                return npc
-        return {"name": "Narrator"}
-
-    def check_objective_completed(self, quest):
-        """Check if the quest's current objective is completed based on LLM feedback."""
-        current_objective = quest.get_current_objective()
-        quest_npcs = [npc for npc in self.npcs if npc.name in quest.npcs]
-
-        prompt = f'''
-        Act as a dungeon master checking the status of an RPG quest objective.
-        Quest details: {quest.__str__()}.
-        NPCs involved: {[npc.__str__() for npc in quest_npcs]}.
-        Player details: {self.player.__str__()}.
-        Current objective: {current_objective}.
-        Reply only "yes" if the objective is fulfilled or "no" if not.
-        '''
-        response = self.llm.inference(prompt=prompt)
-        return "yes" in response
+            # Generate conditional NPC responses for the quest interactions
+            for npc in quest_npcs:
+                npc_response = npc.generate_conditional_response(
+                    player_attributes=self.player.get_attributes(),
+                    interaction_history=npc.memory
+                )
+                # Generate scene-specific image for the interaction
+                prompt = f"{npc.name} reacting to {self.player.current_move} during {quest.name}"
+                image = generate_game_image(prompt, character_name=npc.name)
+                
+                response_data = {
+                    "npc": npc.name,
+                    "dialogue": npc_response,
+                    "image": image
+                }
+                yield response_data
