@@ -18,7 +18,6 @@ from torchvision import transforms
 from transformers import AutoTokenizer, PretrainedConfig, CLIPTextModel
 
 from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionXLPipeline, UNet2DConditionModel
-from diffusers.loaders import text_encoder_lora_state_dict
 from diffusers.models.lora import LoRALinearLayer
 from diffusers.optimization import get_scheduler
 
@@ -93,6 +92,40 @@ def import_model_class_from_model_name_or_path(
         return CLIPTextModelWithProjection
     else:
         raise ValueError(f"{model_class} is not supported.")
+    
+def text_encoder_attn_modules(text_encoder):
+        from transformers import CLIPTextModel, CLIPTextModelWithProjection
+
+        attn_modules = []
+
+        if isinstance(text_encoder, (CLIPTextModel, CLIPTextModelWithProjection)):
+            for i, layer in enumerate(text_encoder.text_model.encoder.layers):
+                name = f"text_model.encoder.layers.{i}.self_attn"
+                mod = layer.self_attn
+                attn_modules.append((name, mod))
+        else:
+            raise ValueError(f"do not know how to get attention modules for: {text_encoder.__class__.__name__}")
+
+        return attn_modules
+
+    
+def text_encoder_lora_state_dict(text_encoder):
+    state_dict = {}
+
+    for name, module in text_encoder_attn_modules(text_encoder):
+        for k, v in module.q_proj.lora_linear_layer.state_dict().items():
+            state_dict[f"{name}.q_proj.lora_linear_layer.{k}"] = v
+
+        for k, v in module.k_proj.lora_linear_layer.state_dict().items():
+            state_dict[f"{name}.k_proj.lora_linear_layer.{k}"] = v
+
+        for k, v in module.v_proj.lora_linear_layer.state_dict().items():
+            state_dict[f"{name}.v_proj.lora_linear_layer.{k}"] = v
+
+        for k, v in module.out_proj.lora_linear_layer.state_dict().items():
+            state_dict[f"{name}.out_proj.lora_linear_layer.{k}"] = v
+
+    return state_dict
 
 def adjust_learning_rate(optimizer, character_consistency, threshold, high_lr, low_lr):
     """Dynamically adjust the learning rate based on character consistency."""
