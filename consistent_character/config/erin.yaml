@@ -66,4 +66,4 @@ noise_offset: 0
 max_grad_norm: 1.0
 num_validation_images: 4
 validation_epochs: 1
-eps = 0.5
+eps: 0.5
