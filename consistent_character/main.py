@@ -16,7 +16,6 @@ import torchvision.transforms as T
 from sklearn.cluster import DBSCAN
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 
 def dbscan_clustering(args, data_points, images=None):
@@ -223,17 +222,6 @@ def make_continuous(lst):
     return [mapping[elem] for elem in lst]
 
 
-def kmeans_2D_visualize(args, centers, data, labels, loop_num):
-    # visualize 2D t-SNE results
-    plt.figure(figsize=(20, 16))
-    tsne = TSNE(n_components=2, random_state=42, perplexity=len(data) - 1)
-    embeddings_2d = tsne.fit_transform(data)
-    
-    for i in range(args.kmeans_center):
-        cluster_points = np.array(embeddings_2d[labels==i])
-        plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster {i + 1}", s=100)
-    plt.savefig(f"thechoseone/data/{args.character_name}_KMeans_res_Loop_{loop_num}.png")
-    
         
 def compare_features(image_features, cluster_centroid):
     # Calculate the Euclidean distance between the two feature vectors
