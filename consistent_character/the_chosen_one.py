@@ -360,7 +360,9 @@ def fine_tune_model(args, loop):
 
                 noisy_model_input = ddpm_scheduler.add_noise(original_samples=model_input, noise=noise, timesteps=timesteps)
 
-                
+                batch["time_ids"] = torch.randint(
+                    0, 1000, (batch["pixel_values"].shape[0],), device=accelerator.device
+                ).long()
 
                 model_pred = unet(
                     noisy_model_input, 
