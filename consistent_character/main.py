@@ -258,5 +258,5 @@ def train_loop(args, loop_num: int, vis=True, start_from=0):
 
 
 if __name__ == "__main__":
-    args = config_2_args("consistent_character/config/captain.yaml")
+    args = config_2_args("consistent_character/config/erin.yaml")
     train_loop(args, args.max_loop)
