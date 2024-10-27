@@ -1,7 +1,7 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-inference_prompt: Create a hyper realistic high quality photo of a human man, has deep blue eyes, well-groomed white beard, fine wrinkles around the eyes, and a soft, knowing smile that conveys wisdom and calm.
+inference_prompt: Create a hyper realistic high quality photo of a human man, has brown eyes, well-groomed white beard, short hair, fine wrinkles around the eyes, and a smile that conveys wisdom and calm.
 learnable_property: object
 initializer_token: cha
 placeholder_token: e<r$i>n
