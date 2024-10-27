@@ -1,7 +1,8 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-inference_prompt: Create a hyper realistic high quality photo of a human man, has brown eyes, well-groomed white beard, short hair, fine wrinkles around the eyes, and a smile that conveys wisdom and calm.
+inference_prompt: Create a hyper-realistic, high-resolution portrait of human male, a wise and gentle character with a calm and knowing expression, has piercing, brown eyes that convey intelligence and warmth, framed by a well-groomed, soft white beard with subtle fine wrinkles around the eyes and mouth. His face is softly lit with natural, warm sunlight, casting gentle shadows that enhance his facial structure, wears a simple but elegant dark green robe with intricate, gold-embroidered trim along the edges, reflecting a subtle sense of wisdom and nobility. The robe is made of a soft, textured fabric that falls gracefully over his shoulders, catching soft highlights in the ambient light. His posture is relaxed but dignified, slightly leaning forward as if in quiet conversation.  The background is softly out of focus to keep the attention on face and expression, enhancing the sense of depth and realism in the portrait. Lighting: Gentle, diffused sunlight that creates a soft glow, illuminating his face and adding a hint of warmth. The light source is slightly angled, creating subtle shadows on one side of his face, adding depth while maintaining the softness of his features. Photo Style: Ultra-realistic, high-quality photography with fine details, sharp focus on the face and eyes, soft bokeh background, professional studio quality. Captured in 4K resolution for fine detail, with natural color tones and high dynamic range (HDR).
+
 learnable_property: object
 initializer_token: cha
 placeholder_token: e<r$i>n
