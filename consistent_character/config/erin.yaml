@@ -36,7 +36,7 @@ adam_beta1: 0.9
 adam_beta2: 0.99
 max_loop: 5
 convergence_scale: 0.85  # 80% in the paper
-min_samples: 5 
+min_samples: 1
 
 # Enhancements
 high_learning_rate: 0.00003     # Initial high learning rate

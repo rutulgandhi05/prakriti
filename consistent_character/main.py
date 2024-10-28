@@ -35,7 +35,8 @@ def dbscan_clustering(args, data_points, images=None):
     else:
         selected_images = None
 
-    print(f"Found clusters: {selected_clusters}")
+    print(f"Found clusters: {cluster_counts}")
+    print(f"Selected clusters: {selected_clusters}")
     return selected_clusters, selected_labels, selected_elements, selected_images
 
 
