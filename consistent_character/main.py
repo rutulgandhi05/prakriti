@@ -165,12 +165,18 @@ def train_loop(args, loop_num: int, start_from=0):
         # clustering
         centers, labels, elements, images = dbscan_clustering(args, embeddings, images = images)
         
-        
+        # Evaluate cohesion for valid clusters only
+        valid_indices = labels != -1  # Mask to ignore noise points
+
+        # Filter out noise points from labels and elements
+        filtered_labels = labels[valid_indices]
+        filtered_elements = elements[valid_indices]
+
         # evaluate
-        center_norms = np.linalg.norm(centers[labels] - elements, axis=-1, keepdims=True) # each data point subtract its coresponding center
-        cohesions = np.zeros(len(np.unique(labels)))
-        for label_id in range(len(np.unique(labels))):
-            cohesions[label_id] = sum(center_norms[labels == label_id]) / sum(labels == label_id)
+        center_norms = np.linalg.norm(centers[filtered_labels] - filtered_elements, axis=-1, keepdims=True) # each data point subtract its coresponding center
+        cohesions = np.zeros(len(np.unique(filtered_labels)))
+        for label_id in range(len(np.unique(filtered_labels))):
+            cohesions[label_id] = sum(center_norms[filtered_labels == label_id]) / sum(filtered_labels == label_id)
         
         # find the most cohesive cluster, and save the corresponding sample
         min_cohesion_label = np.argmin(cohesions)
