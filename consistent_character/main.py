@@ -4,40 +4,30 @@ import shutil
 import numpy as np
 import torch
 import torch.utils.checkpoint
-from diffusers import StableDiffusionXLPipeline
+from diffusers import StableDiffusionXLPipeline, DiffusionPipeline
 from PIL import Image
 import yaml
-import numpy as np
-from diffusers import DiffusionPipeline
 from the_chosen_one import train as train_pipeline
-import shutil
 from facenet_pytorch import InceptionResnetV1
 import torchvision.transforms as T
-from sklearn.cluster import DBSCAN
-from sklearn.manifold import TSNE
-from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN, KMeans
 from scipy.spatial.distance import cdist
 
 def dbscan_clustering(args, data_points, images=None):
     dbscan = DBSCAN(eps=args.eps, min_samples=args.min_samples)
     labels = dbscan.fit_predict(data_points)
 
-    # Filter clusters based on valid labels (excluding noise labeled as -1)
     unique, counts = np.unique(labels, return_counts=True)
     cluster_counts = dict(zip(unique, counts))
-
     selected_clusters = [cluster for cluster, count in cluster_counts.items() if cluster != -1 and count > args.dmin_c]
-    selected_elements = np.array([data_points[i] for i, label in enumerate(labels) if label in selected_clusters])
-    selected_labels = np.array([label for label in labels if label in selected_clusters])
 
-    if images:
-        selected_images = [images[i] for i, label in enumerate(labels) if label in selected_clusters]
-    else:
-        selected_images = None
+    selected_elements = [data_points[i] for i, label in enumerate(labels) if label in selected_clusters]
+    selected_labels = [label for label in labels if label in selected_clusters]
+    selected_images = [images[i] for i, label in enumerate(labels) if label in selected_clusters] if images else None
 
     print(f"Found clusters: {cluster_counts}")
     print(f"Selected clusters: {selected_clusters}")
-    return selected_clusters, selected_labels, selected_elements, selected_images
+    return selected_clusters, np.array(selected_labels), np.array(selected_elements), selected_images
 
 
 def extract_face_embeddings(image):
@@ -72,7 +62,6 @@ def train_loop(args, loop_num: int, start_from=0):
     # initial pair wise distance
     init_dist = 0
     
-    # start looping
     for loop in range(start_from, loop_num):
         print()
         print("###########################################################################")
@@ -82,24 +71,17 @@ def train_loop(args, loop_num: int, start_from=0):
         print("###########################################################################")
         print()
         
-        # load dinov2 every epoch, since we clean the model after feature etraction
         dinov2 = load_dinov2()
         
-        # load diffusion pipeline every epoch for new training image generation, since we clean the model after feature etraction
         if loop == 0:
-            # load from default SDXL config.
             pipe = load_trained_pipeline()
         else:
-            # Note that these configurations are changned during training.
-            # Since the the training is epoch based and we use iterations, the diffuser training script automatically calculate a new epoch according to the iteration and dataset size, thus the predefined epoches will be overrided.
             args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop - 1))
             
-            # load model from the output dir in PREVIOUS loop
             pipe = load_trained_pipeline(model_path=args.output_dir_per_loop, 
                                           load_lora=True, 
                                           lora_path=os.path.join(args.output_dir_per_loop, f"checkpoint-{checkpointing_steps * num_train_epochs}"))
         
-        # update model output dir for CURRENT loop
         args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop))
         
         # set up the training data folder used in training, overwrite and recreate
@@ -164,7 +146,7 @@ def train_loop(args, loop_num: int, start_from=0):
                 print("###########################################################################")
                 print()
         # clustering
-        centers, labels, elements, images = dbscan_clustering(args, embeddings, images = images)
+        centers, labels, elements, images = kmeans_clustering(args, embeddings, images = images)
         
         # Evaluate cohesion for valid clusters only
         valid_indices = labels != -1  # Mask to ignore noise points
