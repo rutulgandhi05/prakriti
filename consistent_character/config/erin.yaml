@@ -27,7 +27,7 @@ backup_data_dir_root: data/erin  # Your dataset backup folder
 # lora_ckpt_dir: checkpoint-1200
 max_train_steps: 500
 num_of_generated_img: 20
-dmin_c: 10
+dmin_c: 5
 dsize_c: 20         
 infer_steps: 35
 adam_epsilon: 0.000000001
