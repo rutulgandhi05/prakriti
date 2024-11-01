@@ -1,7 +1,7 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-inference_prompt: photo of a beautiful 52yo german man with defined jawline, hazel eyes, fine wrinkles, (naked:1.3), fit body, shoulder grey hair
+inference_prompt: photo of a beautiful 52yo german man with straight defined jawline, hazel eyes, fine wrinkles, (naked:1.4), fit body, shoulder length grey hair
 negative_prompt: (glasses:1.2), young, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
 learnable_property: object
 initializer_token: cha
@@ -27,7 +27,7 @@ backup_data_dir_root: data/erin  # Your dataset backup folder
 # lora_ckpt_dir: checkpoint-1200
 max_train_steps: 500
 num_of_generated_img: 128
-dmin_c: 5S
+dmin_c: 10
 dsize_c: 20         
 infer_steps: 35
 adam_epsilon: 0.000000001
