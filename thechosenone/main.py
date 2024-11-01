@@ -1,54 +1,25 @@
 import argparse
-import itertools
-import logging
-import math
+
 import os
-import random
 import shutil
-from pathlib import Path
-from typing import Dict
-from torch.utils.data import Dataset
-import datasets
-import numpy as np
-import torch
-import torch.nn.functional as F
-import torch.utils.checkpoint
-import transformers
-from accelerate import Accelerator
-from accelerate.logging import get_logger
-from accelerate.utils import DistributedDataParallelKwargs, ProjectConfiguration, set_seed
-from datasets import load_dataset
-from huggingface_hub import create_repo, upload_folder
-from packaging import version
-from torchvision import transforms
-from torchvision.transforms.functional import crop
-from tqdm.auto import tqdm
-from transformers import AutoTokenizer, PretrainedConfig, CLIPTextModel, CLIPTokenizer
-import diffusers
-from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionXLPipeline, UNet2DConditionModel
-from diffusers.loaders import LoraLoaderMixin, text_encoder_lora_state_dict
-from diffusers.models.lora import LoRALinearLayer
-from diffusers.optimization import get_scheduler
-from diffusers.training_utils import compute_snr
-from diffusers.utils import check_min_version, is_wandb_available
-from diffusers.utils.import_utils import is_xformers_available
-from PIL import Image
-import PIL
-import safetensors
 import yaml
 import numpy as np
+import torch
+import random
+import torch.utils.checkpoint
+import torchvision.transforms as T
+
+from diffusers import StableDiffusionXLPipeline
+from PIL import Image
 from diffusers import DiffusionPipeline
 from sdxl_the_chosen_one import train as train_pipeline
-import shutil
-from pathlib import Path
-import torchvision.transforms as T
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 
 
-def train_loop(args, loop_num: int, vis=False, start_from=0):
+def train_loop(args, loop_num: int, start_from=0):
     """
     train and load the trained diffusion model, save the images and model file.
     """
@@ -105,14 +76,14 @@ def train_loop(args, loop_num: int, vis=False, start_from=0):
             print(f"[Loop [{loop}/{loop_num-1}], generating image {n_img}/{args.num_of_generated_img - 1}")
             
             # set up different seeds for each image
-            torch.manual_seed(n_img * np.random.randint(1000))
+            torch.manual_seed(-1)
             tmp_folder = f"{args.backup_data_dir_root}/{args.character_name}/{loop}"
             
             # we can load the initially generated images from local backup folder
             if loop==0 and os.path.exists(os.path.join(tmp_folder, f"{n_img}.png")):
                 image = Image.open(os.path.join(tmp_folder, f"{n_img}.png")).convert('RGB')
             else:
-                image = generate_images(pipe, prompt=args.inference_prompt, infer_steps=args.infer_steps)
+                image = generate_images(pipe, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
                 
             images.append(image)
             image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
@@ -155,10 +126,6 @@ def train_loop(args, loop_num: int, vis=False, start_from=0):
                 print()
         # clustering
         centers, labels, elements, images = kmeans_clustering(args, embeddings, images = images)
-        
-        # visualize
-        if vis:
-            kmeans_2D_visualize(args, centers, elements, labels, loop)
         
         # evaluate
         center_norms = np.linalg.norm(centers[labels] - elements, axis=-1, keepdims=True) # each data point subtract its coresponding center
@@ -285,13 +252,19 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, guidance_scale=7.5):
+def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
     """
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
     """
-    n_propmt = "cartoon, anime, sketch, 3d render, unrealistic, painting"
-    image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_propmt).images[0]
+
+    prompt_suffix  = ["(simple grey background:1.3)", "(simple white background:1.3)", "(simple background with bokeh effect:1.3)",  "(simple  background:1.3)",]
+    x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
+    y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
+
+    prompt = random.choice(x_values)+prompt+""+ random.choice(y_values)+prompt+""+ random.choice(prompt_suffix)
+
+    image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
     return image
 
 

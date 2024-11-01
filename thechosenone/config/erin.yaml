@@ -1,8 +1,8 @@
 pretrained_model_name_or_path: stabilityai/stable-diffusion-xl-base-1.0
 pretrained_vae_model_name_or_path: madebyollin/sdxl-vae-fp16-fix
 
-inference_prompt: A hyper-realistic portrait of a wise, gentle elderly man with brown eyes and a well-groomed white beard. Soft sunlight illuminates his face, highlighting fine wrinkles. He wears a dark green robe with gold embroidery that falls gracefully. The softly blurred background enhances focus on his dignified expression, captured in ultra-realistic, high-quality photography with rich color tones and soft bokeh.
-
+inference_prompt: an extreme closeup front shot photo of a beautiful 25yo Indian man with defined jawline, hazel eyes, fine wrinkles,  (naked:1.3), fit body, shoulder length straight grey hair, neutral face expression
+negative_prompt: (glasses:1.2), young, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
 learnable_property: object
 initializer_token: cha
 placeholder_token: e<r$i>n
