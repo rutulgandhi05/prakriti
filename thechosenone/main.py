@@ -263,6 +263,7 @@ def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, n_prompt: str,
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
 
     prompt = random.choice(x_values)+prompt+""+ random.choice(y_values)+prompt+""+ random.choice(prompt_suffix)
+    print(prompt)
 
     image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
     return image
