@@ -76,7 +76,7 @@ def train_loop(args, loop_num: int, start_from=0):
             print(f"[Loop [{loop}/{loop_num-1}], generating image {n_img}/{args.num_of_generated_img - 1}")
             
             # set up different seeds for each image
-            torch.manual_seed(-1)
+            torch.manual_seed(n_img * np.random.randint(1000))
             tmp_folder = f"{args.backup_data_dir_root}/{args.character_name}/{loop}"
             
             # we can load the initially generated images from local backup folder
@@ -262,10 +262,10 @@ def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, n_prompt: str,
     x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
  
-    prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt+" "+ random.choice(prompt_suffix)
-    print(prompt)
+    new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt+" "+ random.choice(prompt_suffix)
+    print(new_prompt)
 
-    image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
+    image = pipe(prompt=new_prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
     return image
 
 
