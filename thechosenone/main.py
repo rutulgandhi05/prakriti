@@ -261,8 +261,8 @@ def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, n_prompt: str,
     prompt_suffix  = ["(simple grey background:1.3)", "(simple white background:1.3)", "(simple background with bokeh effect:1.3)",  "(simple  background:1.3)",]
     x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
-
-    prompt = random.choice(x_values)+prompt+""+ random.choice(y_values)+prompt+""+ random.choice(prompt_suffix)
+ 
+    prompt = random.choice(x_values)+" " +prompt+" "+ random.choice(y_values)+prompt+" "+ random.choice(prompt_suffix)
     print(prompt)
 
     image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
