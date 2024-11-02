@@ -1729,5 +1729,5 @@ def train(args, loop=0, loop_num = 0):
 
 
 if __name__ == "__main__":
-    args = parse_args(input_args=None)
-    train(args)
+    args = parse_args(input_args="thechosenone/config/erin.yaml")
+    train(args, loop=0, loop_num=0)
