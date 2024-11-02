@@ -53,7 +53,6 @@ def train_loop(args, loop_num: int, start_from=0):
         else:
             # Note that these configurations are changned during training.
             # Since the the training is epoch based and we use iterations, the diffuser training script automatically calculate a new epoch according to the iteration and dataset size, thus the predefined epoches will be overrided.
-            args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop - 1))
             
             # load model from the output dir in PREVIOUS loop
             pipe = load_trained_pipeline(model_path=args.output_dir_per_loop, 
@@ -83,15 +82,12 @@ def train_loop(args, loop_num: int, start_from=0):
             if loop==0 and os.path.exists(os.path.join(tmp_folder, f"{n_img}.png")):
                 image = Image.open(os.path.join(tmp_folder, f"{n_img}.png")).convert('RGB')
             else:
-                image = generate_images(pipe, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
+                image = generate_images(pipe, tmp_folder=tmp_folder, n_img=n_img, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
                 
             images.append(image)
             image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
             
-            # save the initial images in the backup folder
-            if not os.path.exists(tmp_folder):
-                os.makedirs(tmp_folder, exist_ok=True)
-            image.save(os.path.join(tmp_folder, f"{n_img}.png"))
+            
         
         # clean up the GPU consumption after inference
         del pipe
@@ -251,20 +247,24 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
+def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5, ):
     """
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
     """
 
-    prompt_suffix  = ["(simple grey background:1.3)", "(simple white background:1.3)", "(simple background with bokeh effect:1.3)",  "(simple  background:1.3)",]
+   
     x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
  
-    new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt+" "+ random.choice(prompt_suffix)
+    new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt
     print(new_prompt)
 
     image = pipe(prompt=new_prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
+    # save the initial images in the backup folder
+    if not os.path.exists(tmp_folder):
+        os.makedirs(tmp_folder, exist_ok=True)
+    image.save(os.path.join(tmp_folder, f"{new_prompt.replace(' ', '_')}+_+{n_img}.png"))
     return image
 
 
@@ -275,7 +275,7 @@ def load_dinov2():
 
 
 if __name__ == "__main__":
-    args = config_2_args("thechosenone/config/erin.yaml")
+    args = config_2_args("consistent_character/config/erin.yaml")
     _ = train_loop(args, args.max_loop, start_from=0)
     
     print(args)

@@ -59,7 +59,7 @@ def loop_inference(loop, prompt_postfix):
     :param prompt_postfix: Text added to the prompt.
     :return: Saves generated images in output folders.
     """
-    args = config_2_args("thechosenone/config/erin.yaml")
+    args = config_2_args("consistent_character/config/erin.yaml")
 
     model_path = os.path.join(args.output_dir, args.character_name, str(loop))
     pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
