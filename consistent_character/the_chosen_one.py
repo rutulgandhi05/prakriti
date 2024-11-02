@@ -1727,9 +1727,20 @@ def train(args, loop=0, loop_num = 0):
         
     accelerator.end_training()
 
+def config_2_args(path):
+    with open(path, 'r') as file:
+        yaml_data = yaml.safe_load(file)
+    parser = argparse.ArgumentParser(description="Generate args from config")
+    for key, value in yaml_data.items():
+        parser.add_argument(f'--{key}', type=type(value), default=value)
+    
+    args = parser.parse_args([])
+        
+    return args
+
 
 if __name__ == "__main__":
-    args = parse_args(input_args="thechosenone/config/erin.yaml")
+    args = config_2_args("thechosenone/config/erin.yaml")
     output_dir_base = args.output_dir
     train_data_dir_base = args.train_data_dir
     args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(0))
