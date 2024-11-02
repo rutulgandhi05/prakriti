@@ -59,7 +59,7 @@ def loop_inference(loop, prompt_postfix):
     :param prompt_postfix: Text added to the prompt.
     :return: Saves generated images in output folders.
     """
-    args = config_2_args("thechosenone/config/captain.yaml")
+    args = config_2_args("thechosenone/config/erin.yaml")
 
     model_path = os.path.join(args.output_dir, args.character_name, str(loop))
     pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
@@ -79,8 +79,8 @@ def loop_inference(loop, prompt_postfix):
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
 if __name__ == "__main__":
-    prompt_postfixs = ["riding a horse", "standing infront of castle", "holding a red flag", "sitting on a bench", "holding a sword"]
+    prompt_postfixs = ["riding a horse", "standing infront of castle", "holding a red flag", "sitting on a bench", "holding a sword","in a simple white background"]
 
-    for i in range(10):
-        for prompt_postfix in prompt_postfixs:
-            loop_inference(i, prompt_postfix)
+    for prompt_postfix in prompt_postfixs:
+            loop_inference(0, prompt_postfix)
+        
