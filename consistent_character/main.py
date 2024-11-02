@@ -1,51 +1,22 @@
 import argparse
+
 import os
 import shutil
+import yaml
 import numpy as np
 import torch
+import random
 import torch.utils.checkpoint
-from diffusers import StableDiffusionXLPipeline, DiffusionPipeline
-from PIL import Image
-import yaml
-from the_chosen_one import train as train_pipeline
-from facenet_pytorch import InceptionResnetV1
 import torchvision.transforms as T
-from sklearn.cluster import DBSCAN, KMeans
+
+from diffusers import StableDiffusionXLPipeline
+from PIL import Image
+from diffusers import DiffusionPipeline
+from the_chosen_one import train as train_pipeline
+from sklearn.manifold import TSNE
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
-
-def dbscan_clustering(args, data_points, images=None):
-    dbscan = DBSCAN(eps=args.eps, min_samples=args.min_samples)
-    labels = dbscan.fit_predict(data_points)
-
-    unique, counts = np.unique(labels, return_counts=True)
-    cluster_counts = dict(zip(unique, counts))
-    selected_clusters = [cluster for cluster, count in cluster_counts.items() if cluster != -1 and count > args.dmin_c]
-
-    selected_elements = [data_points[i] for i, label in enumerate(labels) if label in selected_clusters]
-    selected_labels = [label for label in labels if label in selected_clusters]
-    selected_images = [images[i] for i, label in enumerate(labels) if label in selected_clusters] if images else None
-
-    print(f"Found clusters: {cluster_counts}")
-    print(f"Selected clusters: {selected_clusters}")
-    return selected_clusters, np.array(selected_labels), np.array(selected_elements), selected_images
-
-
-def extract_face_embeddings(image):
-    model = InceptionResnetV1(pretrained='vggface2').eval().cuda()
-    
-    # Preprocess image (assuming 'image' is a PIL Image object)
-    transform = T.Compose([
-        T.Resize((160, 160)),
-        T.ToTensor(),
-        T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
-    img_tensor = transform(image).unsqueeze(0).cuda()
-    
-    # Extract embeddings
-    with torch.no_grad():
-        embedding = model(img_tensor).cpu().numpy()
-    
-    return embedding
 
 
 def train_loop(args, loop_num: int, start_from=0):
@@ -62,6 +33,7 @@ def train_loop(args, loop_num: int, start_from=0):
     # initial pair wise distance
     init_dist = 0
     
+    # start looping
     for loop in range(start_from, loop_num):
         print()
         print("###########################################################################")
@@ -71,17 +43,24 @@ def train_loop(args, loop_num: int, start_from=0):
         print("###########################################################################")
         print()
         
+        # load dinov2 every epoch, since we clean the model after feature etraction
         dinov2 = load_dinov2()
         
+        # load diffusion pipeline every epoch for new training image generation, since we clean the model after feature etraction
         if loop == 0:
+            # load from default SDXL config.
             pipe = load_trained_pipeline()
         else:
+            # Note that these configurations are changned during training.
+            # Since the the training is epoch based and we use iterations, the diffuser training script automatically calculate a new epoch according to the iteration and dataset size, thus the predefined epoches will be overrided.
             args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop - 1))
             
+            # load model from the output dir in PREVIOUS loop
             pipe = load_trained_pipeline(model_path=args.output_dir_per_loop, 
                                           load_lora=True, 
                                           lora_path=os.path.join(args.output_dir_per_loop, f"checkpoint-{checkpointing_steps * num_train_epochs}"))
         
+        # update model output dir for CURRENT loop
         args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop))
         
         # set up the training data folder used in training, overwrite and recreate
@@ -104,10 +83,10 @@ def train_loop(args, loop_num: int, start_from=0):
             if loop==0 and os.path.exists(os.path.join(tmp_folder, f"{n_img}.png")):
                 image = Image.open(os.path.join(tmp_folder, f"{n_img}.png")).convert('RGB')
             else:
-                image = generate_images(pipe, prompt=args.inference_prompt, infer_steps=args.infer_steps)
+                image = generate_images(pipe, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
                 
             images.append(image)
-            image_embs.append(extract_face_embeddings(image))
+            image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
             
             # save the initial images in the backup folder
             if not os.path.exists(tmp_folder):
@@ -147,19 +126,13 @@ def train_loop(args, loop_num: int, start_from=0):
                 print()
         # clustering
         centers, labels, elements, images = kmeans_clustering(args, embeddings, images = images)
+        kmeans_2D_visualize(args, centers, elements, labels, loop)
         
-        # Evaluate cohesion for valid clusters only
-        valid_indices = labels != -1  # Mask to ignore noise points
-
-        # Filter out noise points from labels and elements
-        filtered_labels = labels[valid_indices]
-        filtered_elements = elements[valid_indices]
-
         # evaluate
-        center_norms = np.linalg.norm(centers[filtered_labels] - filtered_elements, axis=-1, keepdims=True) # each data point subtract its coresponding center
-        cohesions = np.zeros(len(np.unique(filtered_labels)))
-        for label_id in range(len(np.unique(filtered_labels))):
-            cohesions[label_id] = sum(center_norms[filtered_labels == label_id]) / sum(filtered_labels == label_id)
+        center_norms = np.linalg.norm(centers[labels] - elements, axis=-1, keepdims=True) # each data point subtract its coresponding center
+        cohesions = np.zeros(len(np.unique(labels)))
+        for label_id in range(len(np.unique(labels))):
+            cohesions[label_id] = sum(center_norms[labels == label_id]) / sum(labels == label_id)
         
         # find the most cohesive cluster, and save the corresponding sample
         min_cohesion_label = np.argmin(cohesions)
@@ -168,8 +141,6 @@ def train_loop(args, loop_num: int, start_from=0):
             if sample_id in idx:
                 sample.save(os.path.join(args.train_data_dir_per_loop, f"{sample_id}.png"))
         
-        # train and save the models according to each loop's folder, and end the loop
-        train_pipeline(args, loop, loop_num)
         
         print()
         print("###########################################################################")
@@ -211,6 +182,17 @@ def make_continuous(lst):
     return [mapping[elem] for elem in lst]
 
 
+def kmeans_2D_visualize(args, centers, data, labels, loop_num):
+    # visualize 2D t-SNE results
+    plt.figure(figsize=(20, 16))
+    tsne = TSNE(n_components=2, random_state=42, perplexity=len(data) - 1)
+    embeddings_2d = tsne.fit_transform(data)
+    
+    for i in range(args.kmeans_center):
+        cluster_points = np.array(embeddings_2d[labels==i])
+        plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster {i + 1}", s=100)
+    plt.savefig(f"thechoseone/data/{args.character_name}_KMeans_res_Loop_{loop_num}.png")
+    
         
 def compare_features(image_features, cluster_centroid):
     # Calculate the Euclidean distance between the two feature vectors
@@ -269,13 +251,20 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, infer_steps, guidance_scale=6.5):
+def generate_images(pipe: StableDiffusionXLPipeline, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
     """
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
     """
-    n_propmt = "cartoon, anime, sketch, 3d render, unrealistic, painting"
-    image = pipe(prompt=prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_propmt).images[0]
+
+    prompt_suffix  = ["(simple grey background:1.3)", "(simple white background:1.3)", "(simple background with bokeh effect:1.3)",  "(simple  background:1.3)",]
+    x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
+    y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
+ 
+    new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt+" "+ random.choice(prompt_suffix)
+    print(new_prompt)
+
+    image = pipe(prompt=new_prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
     return image
 
 
@@ -286,7 +275,7 @@ def load_dinov2():
 
 
 if __name__ == "__main__":
-    args = config_2_args("consistent_character/config/erin.yaml")
+    args = config_2_args("thechosenone/config/erin.yaml")
     _ = train_loop(args, args.max_loop, start_from=0)
     
     print(args)

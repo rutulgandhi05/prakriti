@@ -28,10 +28,10 @@ from packaging import version
 from torchvision import transforms
 from torchvision.transforms.functional import crop
 from tqdm.auto import tqdm
-from transformers import AutoTokenizer, PretrainedConfig
+from transformers import AutoTokenizer, PretrainedConfig, CLIPTextModel, CLIPTokenizer
 import diffusers
 from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionXLPipeline, UNet2DConditionModel
-from diffusers.loaders import LoraLoaderMixin
+from diffusers.loaders import LoraLoaderMixin, text_encoder_lora_state_dict
 from diffusers.models.lora import LoRALinearLayer
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import compute_snr
@@ -40,40 +40,6 @@ from diffusers.utils.import_utils import is_xformers_available
 from PIL import Image
 import PIL
 import safetensors
-
-def text_encoder_attn_modules(text_encoder):
-        from transformers import CLIPTextModel, CLIPTextModelWithProjection
-
-        attn_modules = []
-
-        if isinstance(text_encoder, (CLIPTextModel, CLIPTextModelWithProjection)):
-            for i, layer in enumerate(text_encoder.text_model.encoder.layers):
-                name = f"text_model.encoder.layers.{i}.self_attn"
-                mod = layer.self_attn
-                attn_modules.append((name, mod))
-        else:
-            raise ValueError(f"do not know how to get attention modules for: {text_encoder.__class__.__name__}")
-
-        return attn_modules
-
-def text_encoder_lora_state_dict(text_encoder):
-    state_dict = {}
-
-    for name, module in text_encoder_attn_modules(text_encoder):
-        for k, v in module.q_proj.lora_linear_layer.state_dict().items():
-            state_dict[f"{name}.q_proj.lora_linear_layer.{k}"] = v
-
-        for k, v in module.k_proj.lora_linear_layer.state_dict().items():
-            state_dict[f"{name}.k_proj.lora_linear_layer.{k}"] = v
-
-        for k, v in module.v_proj.lora_linear_layer.state_dict().items():
-            state_dict[f"{name}.v_proj.lora_linear_layer.{k}"] = v
-
-        for k, v in module.out_proj.lora_linear_layer.state_dict().items():
-            state_dict[f"{name}.out_proj.lora_linear_layer.{k}"] = v
-
-    return state_dict
-
 
 
 if version.parse(version.parse(PIL.__version__).base_version) >= version.parse("9.1.0"):
