@@ -1730,4 +1730,8 @@ def train(args, loop=0, loop_num = 0):
 
 if __name__ == "__main__":
     args = parse_args(input_args="thechosenone/config/erin.yaml")
+    output_dir_base = args.output_dir
+    train_data_dir_base = args.train_data_dir
+    args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(0))
+    args.train_data_dir_per_loop = os.path.join(train_data_dir_base, args.character_name, str(0))
     train(args, loop=0, loop_num=0)
