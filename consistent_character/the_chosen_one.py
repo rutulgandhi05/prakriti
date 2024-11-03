@@ -286,7 +286,9 @@ class TextualInversionDataset(Dataset):
         
         placeholder_string = self.placeholder_token
 
-        prompt_gen = img_path.split("/")[-1].split(".")[0].replace("_"," ").format(placeholder_string)
+        prompt_gen = img_path.split("/")[-1]
+        prompt_gen = prompt_gen.split(".")[0].replace("_"," ")
+        prompt_gen = prompt_gen.split("(")[0].strip()
 
         #text = random.choice(self.templates).format(placeholder_string) # a rendering of {}
 

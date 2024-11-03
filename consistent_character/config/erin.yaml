@@ -9,7 +9,7 @@ initializer_token: man
 placeholder_token: 3r1n
 repeats: 1
 save_as_full_pipeline: true
-validation_prompt: A photo of 3r1n
+validation_prompt: an extreme closeup color photo of 3r1n in a forest
 caption_column: text
 resolution: 1024
 random_flip: true
