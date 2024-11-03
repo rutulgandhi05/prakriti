@@ -247,24 +247,24 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5, ):
+def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv_prompt, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
     """
     use the given DiffusionPipeline, generate N images for the same character
     return: image, in PIL
     """
-
-   
     x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
  
     new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt
     print(new_prompt)
 
+    image_filename = f"{random.choice(x_values)} {text_inv_prompt} ({n_img}).png".replace(' ', '_')
+
     image = pipe(prompt=new_prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
     # save the initial images in the backup folder
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder, exist_ok=True)
-    image.save(os.path.join(tmp_folder, f"{new_prompt.replace(' ', '_')}+_+{n_img}.png"))
+    image.save(os.path.join(tmp_folder, image_filename))
     return image
 
 
