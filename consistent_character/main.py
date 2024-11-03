@@ -82,7 +82,7 @@ def train_loop(args, loop_num: int, start_from=0):
             if loop==0 and os.path.exists(os.path.join(tmp_folder, f"{n_img}.png")):
                 image = Image.open(os.path.join(tmp_folder, f"{n_img}.png")).convert('RGB')
             else:
-                image = generate_images(pipe, tmp_folder=tmp_folder, n_img=n_img, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
+                image = generate_images(pipe, tmp_folder=tmp_folder, n_img=n_img, text_inv_prompt=args.text_inv_prompt, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
                 
             images.append(image)
             image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
