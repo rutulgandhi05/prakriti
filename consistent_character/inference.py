@@ -79,7 +79,7 @@ def loop_inference(loop, prompt_postfix):
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
 if __name__ == "__main__":
-    prompt_postfixs = ["in a blue background", "in a white background, wearing a red shirt", "in a green background, wearing a hoodie"]
+    prompt_postfixs = ["in a blue background, wearing black shorts", "in a white background, wearing a red shirt", "in a green background, wearing a hoodie"]
 
     for prompt_postfix in prompt_postfixs:
             loop_inference(0, prompt_postfix)
