@@ -19,7 +19,7 @@ def config_2_args(path):
     args = parser.parse_args([])
     return args
 
-def generate_game_image(prompt, config_path="consistent_character/config/captain.yaml", loop=0, character_name="default_character"):
+def generate_game_image(prompt, config_path="consistent_character/config/erin.yaml", loop=0, character_name="default_character"):
     """
     Generate an image using Stable Diffusion for a specific character and quest.
     :param prompt: Prompt text for the image generation.
@@ -74,7 +74,7 @@ def loop_inference(loop, prompt_postfix):
     os.makedirs(output_folder, exist_ok=True)
 
     # Generate prompt and image
-    prompt = f"A realistic photo of {args.placeholder_token}{prompt_postfix}."
+    prompt = f"A  photo of {args.placeholder_token} {prompt_postfix}."
     image = pipe(prompt, num_inference_steps=35, guidance_scale=7.0).images[0]
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
