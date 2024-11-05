@@ -74,8 +74,8 @@ def loop_inference(loop, prompt_postfix):
     os.makedirs(output_folder, exist_ok=True)
 
     # Generate prompt and image
-    prompt = f"A  photo of {args.placeholder_token} {prompt_postfix}."
-    image = pipe(prompt, num_inference_steps=35, guidance_scale=7.0).images[0]
+    prompt = f"A  photo of ({args.placeholder_token}::2) {prompt_postfix}."
+    image = pipe(prompt, num_inference_steps=35, guidance_scale=7.5).images[0]
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
 if __name__ == "__main__":
