@@ -74,12 +74,12 @@ def loop_inference(loop, prompt_postfix):
     os.makedirs(output_folder, exist_ok=True)
 
     # Generate prompt and image
-    prompt = f"A  photo of ({args.placeholder_token}::2) {prompt_postfix}."
-    image = pipe(prompt, num_inference_steps=35, guidance_scale=7.5).images[0]
+    prompt = f"A  photo of ({args.placeholder_token}::4) {prompt_postfix}."
+    image = pipe(prompt, num_inference_steps=35, guidance_scale=8).images[0]
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
 if __name__ == "__main__":
-    prompt_postfixs = ["riding a horse", "standing infront of castle", "holding a red flag", "sitting on a bench", "holding a sword, background has dead warriors","in a simple white background"]
+    prompt_postfixs = ["in a forest", "standing infront of castle", "holding a red flag", "sitting on a bench", "holding a sword, background has dead warriors","in a simple white background"]
 
     for prompt_postfix in prompt_postfixs:
             loop_inference(0, prompt_postfix)
