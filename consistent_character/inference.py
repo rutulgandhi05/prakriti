@@ -74,13 +74,13 @@ def loop_inference(loop, prompt_postfix):
     os.makedirs(output_folder, exist_ok=True)
 
     # Generate prompt and image
-    prompt = f"A  photo of ({args.placeholder_token}::4) {prompt_postfix}."
-    image = pipe(prompt, num_inference_steps=35, guidance_scale=8).images[0]
+    prompt = f"A photo of ({args.placeholder_token}::4) {prompt_postfix}."
+    n_prompt = "(glasses:1.2), young, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo"
+    image = pipe(prompt, num_inference_steps=35, guidance_scale=10, negative_prompt=n_prompt).images[0]
     image.save(os.path.join(output_folder, f"{args.character_name}_{image_postfix}_loop_{loop}.png"))
 
 if __name__ == "__main__":
-    prompt_postfixs = ["in a blue background, wearing black shorts", "in a white background, wearing a red shirt", "in a green background, wearing a hoodie"]
+    prompt_postfixs = ["dense green forest in background", "(ERIN written with white color in black backround::1.2)", "sitting on a bench with simple bricks wall in background", "eating food, with grey wall in background"]
 
     for prompt_postfix in prompt_postfixs:
             loop_inference(0, prompt_postfix)
-        
