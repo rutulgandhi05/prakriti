@@ -77,9 +77,9 @@ def loop_inference(loop, prompt_postfix):
     prompt = f"A photo of ({args.placeholder_token}::4) {prompt_postfix}."
     n_prompt = "(glasses:1.2), young, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo"
 
-    image = pipe(prompt, num_inference_steps=35, guidance_scale=9.5, negative_prompt=n_prompt).images[0]
+    image = pipe(prompt, num_inference_steps=30, guidance_scale=10, negative_prompt=n_prompt).images[0]
 
-    image_postfix = prompt.replace(" ", "_")
+    image_postfix = prompt.replace(" ", "_").replace("::4)", "").replace("(", "")
     image.save(os.path.join(output_folder, f"{image_postfix}_loop_{loop}.png"))
 
 if __name__ == "__main__":

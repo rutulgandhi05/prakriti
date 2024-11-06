@@ -11,7 +11,7 @@ import torchvision.transforms as T
 
 from diffusers import StableDiffusionXLPipeline
 from PIL import Image
-from diffusers import DiffusionPipeline
+from diffusers import DDIMScheduler
 from the_chosen_one import train as train_pipeline
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
@@ -214,12 +214,16 @@ def load_trained_pipeline(model_path = None, load_lora=True, lora_path=None):
     load the diffusion pipeline according to the trained model
     """
     if model_path is not None:
-        # TODO: long warning for lora
-        pipe = DiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16)
+        ddim = DDIMScheduler.from_pretrained(model_path, subfolder="scheduler")
+        pipe = StableDiffusionXLPipeline.from_pretrained(model_path, torch_dtype=torch.float16, scheduler=ddim, use_safetensors=True)
+        
         if load_lora:
             pipe.load_lora_weights(lora_path)
+            
     else:
-        pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0")
+        ddim = DDIMScheduler.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler")
+        pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", scheduler=ddim,  use_safetensors=True)
+    
     pipe.to("cuda")
     return pipe
 
@@ -249,7 +253,7 @@ def infer_model(model, image):
 
 def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv_prompt, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
     """
-    use the given DiffusionPipeline, generate N images for the same character
+    use the given StableDiffusionXLPipeline, generate N images for the same character
     return: image, in PIL
     """
     x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
@@ -260,7 +264,15 @@ def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv
 
     image_filename = f"{random.choice(x_values)} {text_inv_prompt} ({n_img}).png".replace(' ', '_')
 
-    image = pipe(prompt=new_prompt, num_inference_steps=infer_steps, guidance_scale=guidance_scale, negative_prompt=n_prompt).images[0]
+    image = pipe(prompt=new_prompt, 
+                num_inference_steps=infer_steps,
+                guidance_scale=guidance_scale, 
+                negative_prompt=n_prompt,
+                negative_original_size=(512, 512),
+                negative_target_size=(1024, 1024)
+                ).images[0]
+    
+    
     # save the initial images in the backup folder
     if not os.path.exists(tmp_folder):
         os.makedirs(tmp_folder, exist_ok=True)
