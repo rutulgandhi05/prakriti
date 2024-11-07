@@ -310,48 +310,6 @@ class TextualInversionDataset(Dataset):
             return_tensors="pt",
         ).input_ids[0] # tokenize the whole sentence, e.g. a rendering of "placeholder"
         
-        
-        # # default to score-sde preprocessing
-        # img = np.array(image).astype(np.uint8)
-
-        # if self.center_crop:
-        #     crop = min(img.shape[0], img.shape[1])
-        #     (
-        #         h,
-        #         w,
-        #     ) = (
-        #         img.shape[0],
-        #         img.shape[1],
-        #     )
-        #     img = img[(h - crop) // 2 : (h + crop) // 2, (w - crop) // 2 : (w + crop) // 2]
-
-        # image = Image.fromarray(img)
-        # image = image.resize((self.size, self.size), resample=self.interpolation)
-
-        # image = self.flip_transform(image)
-        # image = np.array(image).astype(np.uint8)
-        # image = (image / 127.5 - 1.0).astype(np.float32)
-      
-        # # default to score-sde preprocessing
-        # img = np.array(image).astype(np.uint8)
-
-        # if self.center_crop:
-        #     crop = min(img.shape[0], img.shape[1])
-        #     (
-        #         h,
-        #         w,
-        #     ) = (
-        #         img.shape[0],
-        #         img.shape[1],
-        #     )
-        #     img = img[(h - crop) // 2 : (h + crop) // 2, (w - crop) // 2 : (w + crop) // 2]
-
-        # image = Image.fromarray(img)
-        # image = image.resize((self.size, self.size), resample=self.interpolation)
-
-        # image = self.flip_transform(image)
-        # image = np.array(image).astype(np.uint8)
-        # image = (image / 127.5 - 1.0).astype(np.float32)
         return example # contain the encoding of the text prompt (template + placeholder), and the img 
 
 
@@ -654,7 +612,7 @@ def train(args, loop=0, loop_num = 0):
         unet_lora_parameters.extend(attn_module.to_v.lora_layer.parameters())
         unet_lora_parameters.extend(attn_module.to_out[0].lora_layer.parameters())
 
-    # The text encoder comes from 🤗 transformers, so we cannot directly modify it.
+    # The text encoder comes from transformers, so we cannot directly modify it.
     # So, instead, we monkey-patch the forward calls of its attention-blocks.
     if args.train_text_encoder:
         # ensure that dtype is float32, even if rest of the model that isn't trained is loaded in fp16

@@ -1,17 +1,16 @@
-import argparse
-
 import os
 import shutil
 import yaml
 import numpy as np
 import torch
+import argparse
 import random
 import torch.utils.checkpoint
 import torchvision.transforms as T
 
 from diffusers import StableDiffusionXLPipeline
 from PIL import Image
-from diffusers import DDIMScheduler
+from diffusers import DDIMScheduler, DPMSolverMultistepScheduler
 from the_chosen_one import train as train_pipeline
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
@@ -214,15 +213,18 @@ def load_trained_pipeline(model_path = None, load_lora=True, lora_path=None):
     load the diffusion pipeline according to the trained model
     """
     if model_path is not None:
-        ddim = DDIMScheduler.from_pretrained(model_path, subfolder="scheduler")
-        pipe = StableDiffusionXLPipeline.from_pretrained(model_path, torch_dtype=torch.float16, scheduler=ddim, use_safetensors=True)
+        ddpm = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler")
+        pipe = StableDiffusionXLPipeline.from_pretrained(model_path, torch_dtype=torch.float16, use_safetensors=True)
         
         if load_lora:
             pipe.load_lora_weights(lora_path)
-            
+
+        pipe.scheduler = ddpm
+
     else:
-        ddim = DDIMScheduler.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler")
-        pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", scheduler=ddim,  use_safetensors=True)
+        ddpm = DPMSolverMultistepScheduler.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler", use_karras_sigmas=True)
+        pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True)
+        pipe.scheduler = ddpm
     
     pipe.to("cuda")
     return pipe
