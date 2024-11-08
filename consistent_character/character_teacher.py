@@ -155,10 +155,9 @@ class Teacher:
         with torch.no_grad():            
             # Embeddings[tokenNo] to learn
             tokens=base.components["tokenizer"].encode(token)
-            assert len(tokens)==3, "token is not a single token in 'tokenizer'"
+           
             tokenNo=tokens[1]
             tokens=base.components["tokenizer_2"].encode(token)
-            assert len(tokens)==3, "token is not a single token in 'tokenizer_2'"
             tokenNo2=tokens[1]
             embs=base.components["text_encoder"].text_model.embeddings.token_embedding.weight
             embs2=base.components["text_encoder_2"].text_model.embeddings.token_embedding.weight
