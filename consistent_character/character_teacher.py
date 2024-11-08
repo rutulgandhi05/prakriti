@@ -16,7 +16,7 @@ class Teacher:
         self.args = self.config_2_args(args_path)
 
         # INPUT images
-        self.imgs_path=os.path.join(self.args.train_data_dir, self.args.character_name, 0)
+        self.imgs_path=os.path.join(self.args.train_data_dir, self.args.character_name, "0")
         self.imgs_wh=(1024,1024) # 25 min for 500 steps (3090TI) -> noisy when used with lower INPUT image resolution
         #imgs_wh=(768,768) # 15 min for 500 steps (3090TI) -> good results
         #imgs_wh=(512,512) # 10 min for 500 steps (3090TI) -> fastest
