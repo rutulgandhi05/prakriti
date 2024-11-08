@@ -9,6 +9,18 @@ from PIL import Image,ImageEnhance
 from diffusers import DiffusionPipeline,DDIMScheduler,DDPMScheduler
 
 
+def config_2_args(path):
+    with open(path, 'r') as file:
+        yaml_data = yaml.safe_load(file)
+    parser = argparse.ArgumentParser(description="Generate args from config")
+    for key, value in yaml_data.items():
+        parser.add_argument(f'--{key}', type=type(value), default=value)
+    
+    args = parser.parse_args([])
+        
+    return args
+
+
 def save_XLembedding(emb, embedding_file, path):
         torch.save(emb, path+embedding_file)
 
@@ -36,7 +48,10 @@ def load_XLembedding(base, token, embedding_file, path):
 
 
 
-def main(args):
+def main(args, prompt_postfix):
+    output_folder = f"data/inference_results/{args.character_name}/txt_inv"
+    os.makedirs(output_folder, exist_ok=True)
+
     base = DiffusionPipeline.from_pretrained(
         args.pretrained_model_name_or_path, 
         torch_dtype=torch.float16, #torch.bfloat16
@@ -44,8 +59,10 @@ def main(args):
         use_safetensors=True,
         add_watermarker=False,
         )
+    
     base.enable_xformers_memory_efficient_attention()
     torch.set_grad_enabled(False)
+    
     _=base.to("cuda")
 
     refiner = DiffusionPipeline.from_pretrained(
@@ -67,34 +84,40 @@ def main(args):
 
     load_XLembedding(base,token=learned,embedding_file=emb_file,path=embs_path)
 
-    p1="The {} doll at the beach"
-    p2="The 3D rendering of a group of {} figurines dressed in red-striped bathing suits having fun at the beach"
-    p3="The 3D rendering of a group of {} figurines dressed in dirndl wearing sunglasses drinking beer and having fun at the oktoberfest"
-    negative_prompt="disfigure kitsch ugly oversaturated deformed mutation blurry mutated duplicate malformed cropped, bad anatomy, outof focus frame, poorly drawn face, low quality, cloned face, deformed face, squint eyes, malformed hand, fused fingers, crooked arm leg, missing disconnect arm leg"
+    prompt_postfix = prompt_postfix
+    prompt = f"A photo of {args.placeholder_token} {prompt_postfix}."
+    n_prompt = "(glasses:1.2), young, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo"
+
     n_steps=40
     high_noise_frac=.75
+    
+    with torch.no_grad():    
+        torch.manual_seed(args.seed)
+        image = base(
+            prompt=prompt,
+            negative_prompt=n_prompt,
+            num_inference_steps=n_steps,
+            denoising_end=high_noise_frac,
+            output_type="latent"
+        ).images
 
-    for seed,sample_prompt in zip([20,30,40,1,8,9,45,75,90],[p1,p1,p1,p2,p2,p2,p3,p3,p3]): 
-        prompt=sample_prompt.format(learned)
-        with torch.no_grad():    
-            torch.manual_seed(seed)
-            image = base(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=n_steps,
-                denoising_end=high_noise_frac,
-                output_type="latent"
-            ).images
+        image = refiner(
+            prompt=prompt,
+            negative_prompt=n_prompt,
+            num_inference_steps=n_steps,
+            denoising_start=high_noise_frac,
+            image=image,
+        ).images[0]
 
-            image = refiner(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=n_steps,
-                denoising_start=high_noise_frac,
-                image=image,
-            ).images[0]
+        
+        image.save( os.path.join(output_folder, "{}.png".format(prompt.replace(" ", "_"))))
+        
 
-            output_folder = f"data/inference_results/{args.character_name}/txt_inv"
-            os.makedirs(output_folder, exist_ok=True)
-            image.save( os.path.join(output_folder, "{}.png".format(seed)))
-           
+
+if __name__ == "__main__":
+    args = config_2_args("consistent_character/config/erin.yaml")
+    prompt_postfixs = ["with dense green forest in background", "ERIN written with white color in black backround", "sitting on a bench with simple bricks wall in background", "eating food, with grey wall in background"]
+
+    for prompt_postfix in prompt_postfixs:
+            
+        main(args=args, prompt_postfix=prompt_postfix)
