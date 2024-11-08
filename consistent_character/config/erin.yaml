@@ -71,4 +71,4 @@ eps: 0.5
 
 teacher_output_dir: data/3r1n_mod/teacher/experiments
 teacher_train_data_dir: data/3r1n_mod/teacher/loop_images
-teacher_backup_data_dir_root: data/teacher/3r1n_mod
+teacher_backup_data_dir_root: data/3r1n_mod/teacher
