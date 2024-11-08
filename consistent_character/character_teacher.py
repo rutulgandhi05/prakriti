@@ -36,7 +36,7 @@ class Teacher:
         self.outGIF = f"{self.args.teacher_backup_data_dir_root}/{self.args.character_name}_train.gif"
 
         # SDXL base model
-        self.sdxl = self.base_model(self.args.pretrained_model_name_or_path)
+        self.base = self.base_model(self.args.pretrained_model_name_or_path)
 
         self.template_prompts_for_faces=["a color photo of {}",
                             "a national geograhic photo of {}",
