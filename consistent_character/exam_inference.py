@@ -30,10 +30,10 @@ def set_XLembedding(base, emb, token):
     with torch.no_grad():            
         # Embeddings[tokenNo] to learn
         tokens=base.components["tokenizer"].encode(token)
-        assert len(tokens)==3, "token is not a single token in 'tokenizer'"
+
         tokenNo=tokens[1]
         tokens=base.components["tokenizer_2"].encode(token)
-        assert len(tokens)==3, "token is not a single token in 'tokenizer_2'"
+
         tokenNo2=tokens[1]
         embs=base.components["text_encoder"].text_model.embeddings.token_embedding.weight
         embs2=base.components["text_encoder_2"].text_model.embeddings.token_embedding.weight
@@ -50,7 +50,7 @@ def load_XLembedding(base, token, embedding_file, path):
 
 
 def main(args, prompt_postfix):
-    output_folder = f"data/inference_results/{args.character_name}/txt_inv"
+    output_folder = f"data/inference_results/3r1n_mod/txt_inv"
     os.makedirs(output_folder, exist_ok=True)
 
     base = DiffusionPipeline.from_pretrained(
