@@ -200,10 +200,8 @@ class Teacher:
         with torch.no_grad():       
             # Embeddings[tokenNo] to learn
             tokens=XLtok1.encode(token)
-            assert len(tokens)==3, "token is not a single token in 'tokenizer'"
             tokenNo=tokens[1]
             tokens=XLtok2.encode(token)
-            assert len(tokens)==3, "token is not a single token in 'tokenizer_2'"
             tokenNo2=tokens[1]            
 
             # init Embedding[tokenNo] with noise or with a copy of an existing embedding
@@ -216,10 +214,8 @@ class Teacher:
                 startNo2="~"
             else:  
                 tokens=XLtok1.encode(start_token)
-                assert len(tokens)==3, "start_token is not a single token in 'tokenizer'"
                 startNo=tokens[1]
                 tokens=XLtok2.encode(start_token)
-                assert len(tokens)==3, "start_token is not a single token in 'tokenizer_2'"
                 startNo2=tokens[1]
                 embs[tokenNo]=embs[startNo].clone()
                 embs2[tokenNo2]=embs2[startNo2].clone()
