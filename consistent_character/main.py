@@ -49,7 +49,7 @@ def train_loop(args, loop_num: int, start_from=0):
         # load diffusion pipeline every epoch for new training image generation, since we clean the model after feature etraction
         if loop == 0:
             # load from default SDXL config.
-            pipe = load_trained_pipeline(args=args)
+            refiner, pipe = load_trained_pipeline(args=args)
         else:
             # Note that these configurations are changned during training.
             # Since the the training is epoch based and we use iterations, the diffuser training script automatically calculate a new epoch according to the iteration and dataset size, thus the predefined epoches will be overrided.
