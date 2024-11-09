@@ -251,7 +251,8 @@ def load_trained_pipeline(model_path = None, load_lora=True, lora_path=None):
 
         embs_path=args.teacher_output_dir
         emb_file=f"{args.character_name}.pt"
-        pipe.load_textual_inversion(embs_path+emb_file)
+        emb=torch.load(embs_path+emb_file)
+        pipe.load_textual_inversion(emb)
     
     pipe.to("cuda")
     return pipe
