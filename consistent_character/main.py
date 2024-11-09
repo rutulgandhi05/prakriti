@@ -32,28 +32,6 @@ def train_loop(args, loop_num: int, start_from=0):
     # initial pair wise distance
     init_dist = 0
 
-    base = DiffusionPipeline.from_pretrained(
-        args.pretrained_model_name_or_path, 
-        torch_dtype=torch.float16, #torch.bfloat16
-        variant="fp32", 
-        use_safetensors=True,
-        add_watermarker=False,
-        )
-    
-    base.enable_xformers_memory_efficient_attention()
-    torch.set_grad_enabled(False)
-    
-
-    refiner = DiffusionPipeline.from_pretrained(
-        "stabilityai/stable-diffusion-xl-refiner-1.0",
-        text_encoder_2=base.text_encoder_2,  
-        vae=base.vae,
-        torch_dtype=torch.float16,
-        variant="fp16",
-        use_safetensors=True,
-        add_watermarker=False,
-    )
-    refiner.enable_xformers_memory_efficient_attention()
     
     # start looping
     for loop in range(start_from, loop_num):
@@ -77,7 +55,7 @@ def train_loop(args, loop_num: int, start_from=0):
             # Since the the training is epoch based and we use iterations, the diffuser training script automatically calculate a new epoch according to the iteration and dataset size, thus the predefined epoches will be overrided.
             
             # load model from the output dir in PREVIOUS loop
-            pipe = load_trained_pipeline(model_path=args.output_dir_per_loop, 
+            refiner, pipe = load_trained_pipeline(model_path=args.output_dir_per_loop, 
                                           load_lora=True, 
                                           lora_path=os.path.join(args.output_dir_per_loop, f"checkpoint-{checkpointing_steps * num_train_epochs}"),
                                           args=args)
@@ -105,7 +83,7 @@ def train_loop(args, loop_num: int, start_from=0):
             if loop==0 and os.path.exists(os.path.join(tmp_folder, f"{n_img}.png")):
                 image = Image.open(os.path.join(tmp_folder, f"{n_img}.png")).convert('RGB')
             else:
-                image = generate_images(pipe, tmp_folder=tmp_folder, placeholder_token=args.placeholder_token, n_img=n_img, text_inv_prompt=args.text_inv_prompt, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
+                image = generate_images(pipe, tmp_folder=tmp_folder, placeholder_token=args.placeholder_token, refiner=refiner,n_img=n_img, text_inv_prompt=args.text_inv_prompt, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
                 
             images.append(image)
             image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
@@ -256,9 +234,18 @@ def load_trained_pipeline(args, model_path = None, load_lora=True, lora_path=Non
         pipe.load_textual_inversion(emb["emb2"], token=args.character_name, text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2)
         pipe.load_textual_inversion(emb["emb"], token={args.character_name}, text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer)
 
+        refiner = DiffusionPipeline.from_pretrained(
+            "stabilityai/stable-diffusion-xl-refiner-1.0",
+            text_encoder_2=pipe.text_encoder_2,
+            vae=pipe.vae,
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+            variant="fp16",
+        ).to("cuda")
+
     
     pipe.to("cuda")
-    return pipe
+    return refiner, pipe
 
 
 def config_2_args(path):
@@ -284,7 +271,7 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, placeholder_token, text_inv_prompt, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
+def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, placeholder_token, text_inv_prompt, refiner, n_prompt: str, infer_steps, guidance_scale=7.5):
     """
     use the given StableDiffusionXLPipeline, generate N images for the same character
     return: image, in PIL
@@ -303,8 +290,18 @@ def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, placehol
                 guidance_scale=guidance_scale, 
                 negative_prompt=n_prompt,
                 negative_original_size=(512, 512),
-                negative_target_size=(1024, 1024)
-                ).images[0]
+                negative_target_size=(1024, 1024),
+                denoising_end=0.8,
+                output_type="latent",
+                ).images
+    
+    image = refiner(
+        prompt=new_prompt,
+        num_inference_steps=40,
+        denoising_start=0.8,
+        image=image,
+    ).images[0]
+   
     
     
     # save the initial images in the backup folder
