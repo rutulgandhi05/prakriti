@@ -280,7 +280,7 @@ def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, placehol
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
  
     #new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt
-    new_prompt = f" {random.choice(x_values)} {random.choice(y_values)} of {placeholder_token} neutral background"
+    new_prompt = f" {random.choice(x_values)} {random.choice(y_values)} of ({placeholder_token}::1.8), with neutral background"
     print(new_prompt)
 
     image_filename = f"{random.choice(x_values)} {text_inv_prompt} ({n_img}).png".replace(' ', '_')
@@ -297,7 +297,7 @@ def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, placehol
     
     image = refiner(
         prompt=new_prompt,
-        num_inference_steps=40,
+        num_inference_steps=infer_steps,
         denoising_start=0.8,
         image=image,
     ).images[0]
