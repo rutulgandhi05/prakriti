@@ -232,7 +232,7 @@ def load_trained_pipeline(args, model_path = None, load_lora=True, lora_path=Non
 
     else:
         ddpm = DPMSolverMultistepScheduler.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler", use_karras_sigmas=True)
-        pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True)
+        pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True, torch_dtype=torch.float16, variant="fp16",)
         pipe.scheduler = ddpm
 
         embs_path=args.teacher_output_dir
