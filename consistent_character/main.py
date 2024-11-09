@@ -79,7 +79,8 @@ def train_loop(args, loop_num: int, start_from=0):
             # load model from the output dir in PREVIOUS loop
             pipe = load_trained_pipeline(model_path=args.output_dir_per_loop, 
                                           load_lora=True, 
-                                          lora_path=os.path.join(args.output_dir_per_loop, f"checkpoint-{checkpointing_steps * num_train_epochs}"))
+                                          lora_path=os.path.join(args.output_dir_per_loop, f"checkpoint-{checkpointing_steps * num_train_epochs}"),
+                                          args=args)
         
         # update model output dir for CURRENT loop
         args.output_dir_per_loop = os.path.join(output_dir_base, args.character_name, str(loop))
@@ -231,7 +232,7 @@ def prepare_init_images(source_path, target_root_path):
         print(f"Copied {src_path} to {dest_path}")
 
 
-def load_trained_pipeline(model_path = None, load_lora=True, lora_path=None):
+def load_trained_pipeline(args, model_path = None, load_lora=True, lora_path=None):
     """
     load the diffusion pipeline according to the trained model
     """
@@ -252,7 +253,9 @@ def load_trained_pipeline(model_path = None, load_lora=True, lora_path=None):
         embs_path=args.teacher_output_dir
         emb_file=f"{args.character_name}.pt"
         emb=torch.load(embs_path+emb_file)
-        pipe.load_textual_inversion(emb)
+        pipe.load_textual_inversion(emb["emb2"], token=args.character_name, text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2)
+        pipe.load_textual_inversion(emb["emb"], token={args.character_name}, text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer)
+
     
     pipe.to("cuda")
     return pipe
