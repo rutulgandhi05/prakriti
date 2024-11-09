@@ -311,6 +311,18 @@ def generate_images_with_emb(pipe: StableDiffusionXLPipeline, tmp_folder, n_img,
     
     _=base.to("cuda")
 
+    refiner = DiffusionPipeline.from_pretrained(
+        "stabilityai/stable-diffusion-xl-refiner-1.0",
+        text_encoder_2=base.text_encoder_2,  
+        vae=base.vae,
+        torch_dtype=torch.float16,
+        variant="fp16",
+        use_safetensors=True,
+        add_watermarker=False,
+    )
+    refiner.enable_xformers_memory_efficient_attention()
+    _=refiner.to("cuda")
+
     learned=args.placeholder_token
     embs_path=args.teacher_output_dir
     emb_file=f"{args.character_name}.pt"
@@ -344,9 +356,15 @@ def generate_images_with_emb(pipe: StableDiffusionXLPipeline, tmp_folder, n_img,
             num_inference_steps=n_steps,
             denoising_end=high_noise_frac,
             output_type="latent"
-        ).images[0]
+        ).images
 
-        
+        image = refiner(
+            prompt=prompt,
+            negative_prompt=n_prompt,
+            num_inference_steps=n_steps,
+            denoising_start=high_noise_frac,
+            image=image,
+        ).images[0]
 
         # save the initial images in the backup folder
         if not os.path.exists(tmp_folder):
