@@ -31,6 +31,29 @@ def train_loop(args, loop_num: int, start_from=0):
     
     # initial pair wise distance
     init_dist = 0
+
+    base = DiffusionPipeline.from_pretrained(
+        args.pretrained_model_name_or_path, 
+        torch_dtype=torch.float16, #torch.bfloat16
+        variant="fp32", 
+        use_safetensors=True,
+        add_watermarker=False,
+        )
+    
+    base.enable_xformers_memory_efficient_attention()
+    torch.set_grad_enabled(False)
+    
+
+    refiner = DiffusionPipeline.from_pretrained(
+        "stabilityai/stable-diffusion-xl-refiner-1.0",
+        text_encoder_2=base.text_encoder_2,  
+        vae=base.vae,
+        torch_dtype=torch.float16,
+        variant="fp16",
+        use_safetensors=True,
+        add_watermarker=False,
+    )
+    refiner.enable_xformers_memory_efficient_attention()
     
     # start looping
     for loop in range(start_from, loop_num):
@@ -81,8 +104,7 @@ def train_loop(args, loop_num: int, start_from=0):
             if loop==0 and os.path.exists(os.path.join(tmp_folder, f"{n_img}.png")):
                 image = Image.open(os.path.join(tmp_folder, f"{n_img}.png")).convert('RGB')
             else:
-                #image = generate_images(pipe, tmp_folder=tmp_folder, n_img=n_img, text_inv_prompt=args.text_inv_prompt, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
-                image = generate_images_with_emb(pipe, tmp_folder=tmp_folder, n_img=n_img, args=args, text_inv_prompt=args.text_inv_prompt, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
+                image = generate_images(pipe, tmp_folder=tmp_folder, placeholder_token=args.placeholder_token, n_img=n_img, text_inv_prompt=args.text_inv_prompt, prompt=args.inference_prompt, n_prompt=args.negative_prompt, infer_steps=args.infer_steps)
                 
             images.append(image)
             image_embs.append(infer_model(dinov2, image).detach().cpu().numpy())
@@ -226,6 +248,10 @@ def load_trained_pipeline(model_path = None, load_lora=True, lora_path=None):
         ddpm = DPMSolverMultistepScheduler.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler", use_karras_sigmas=True)
         pipe = StableDiffusionXLPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", use_safetensors=True)
         pipe.scheduler = ddpm
+
+        embs_path=args.teacher_output_dir
+        emb_file=f"{args.character_name}.pt"
+        pipe.load_textual_inversion(embs_path+emb_file)
     
     pipe.to("cuda")
     return pipe
@@ -254,7 +280,7 @@ def infer_model(model, image):
     return cls_token
 
 
-def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv_prompt, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
+def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, placeholder_token, text_inv_prompt, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
     """
     use the given StableDiffusionXLPipeline, generate N images for the same character
     return: image, in PIL
@@ -262,7 +288,8 @@ def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv
     x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
     y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
  
-    new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt
+    #new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt
+    new_prompt = f" {random.choice(x_values)} {random.choice(y_values)} of {placeholder_token} neutral background"
     print(new_prompt)
 
     image_filename = f"{random.choice(x_values)} {text_inv_prompt} ({n_img}).png".replace(' ', '_')
@@ -281,100 +308,6 @@ def generate_images(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv
         os.makedirs(tmp_folder, exist_ok=True)
     image.save(os.path.join(tmp_folder, image_filename))
     return image
-
-
-def generate_images_with_emb(pipe: StableDiffusionXLPipeline, tmp_folder, n_img, text_inv_prompt, args, prompt: str, n_prompt: str, infer_steps, guidance_scale=7.5):
-    """
-    use the given StableDiffusionXLPipeline, generate N images for the same character
-    return: image, in PIL
-    """
-    x_values = ["an extreme closeup", "a medium closeup", "a closeup", "a medium shot", "a full body"]
-    y_values = ["front shot", "rear angle", "side angle", "shot from above", "low angle shot"]
- 
-    new_prompt = random.choice(x_values)+" "+ random.choice(y_values)+" "+prompt
-    print(new_prompt)
-
-    image_filename = f"{new_prompt} ({n_img}).png".replace(' ', '_')
-
-    
-
-    base = DiffusionPipeline.from_pretrained(
-        args.pretrained_model_name_or_path, 
-        torch_dtype=torch.float16, #torch.bfloat16
-        variant="fp32", 
-        use_safetensors=True,
-        add_watermarker=False,
-        )
-    
-    base.enable_xformers_memory_efficient_attention()
-    torch.set_grad_enabled(False)
-    
-    _=base.to("cuda")
-
-    refiner = DiffusionPipeline.from_pretrained(
-        "stabilityai/stable-diffusion-xl-refiner-1.0",
-        text_encoder_2=base.text_encoder_2,  
-        vae=base.vae,
-        torch_dtype=torch.float16,
-        variant="fp16",
-        use_safetensors=True,
-        add_watermarker=False,
-    )
-    refiner.enable_xformers_memory_efficient_attention()
-    _=refiner.to("cuda")
-
-    learned=args.placeholder_token
-    embs_path=args.teacher_output_dir
-    emb_file=f"{args.character_name}.pt"
-
-    emb=torch.load(embs_path+emb_file)
-
-    with torch.no_grad():            
-        # Embeddings[tokenNo] to learn
-        tokens=base.components["tokenizer"].encode(learned)
-
-        tokenNo=tokens[1]
-        tokens=base.components["tokenizer_2"].encode(learned)
-
-        tokenNo2=tokens[1]
-        embs=base.components["text_encoder"].text_model.embeddings.token_embedding.weight
-        embs2=base.components["text_encoder_2"].text_model.embeddings.token_embedding.weight
-        assert embs[tokenNo].shape==emb["emb"].shape, "different 'text_encoder'"
-        assert embs2[tokenNo2].shape==emb["emb2"].shape, "different 'text_encoder_2'"
-        embs[tokenNo]=emb["emb"].to(embs.dtype).to(embs.device)
-        embs2[tokenNo2]=emb["emb2"].to(embs2.dtype).to(embs2.device)
-
-
-    n_steps=40
-    high_noise_frac=.75
-    
-    with torch.no_grad():    
-        torch.manual_seed(n_img * np.random.randint(1000))
-        image = base(
-            prompt=prompt,
-            negative_prompt=n_prompt,
-            num_inference_steps=n_steps,
-            denoising_end=high_noise_frac,
-            output_type="latent"
-        ).images
-
-        image = refiner(
-            prompt=prompt,
-            negative_prompt=n_prompt,
-            num_inference_steps=n_steps,
-            denoising_start=high_noise_frac,
-            image=image,
-        ).images[0]
-
-        # save the initial images in the backup folder
-        if not os.path.exists(tmp_folder):
-            os.makedirs(tmp_folder, exist_ok=True)
-        image.save(os.path.join(tmp_folder, image_filename))
-
-        torch.cuda.empty_cache()
-        return image
-
-
 
 
 def load_dinov2():
