@@ -1,13 +1,16 @@
 # llm_engine.py
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from huggingface_hub import login
+
+login(token="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")
 
 class LLMEngine:
-    def __init__(self, model_name="mistralai/Mistral-7B-v0.1", token="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"):
+    def __init__(self, model_name="mistralai/Mistral-7B-v0.1"):
         # Load the Mistral 7B model and tokenizer
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, token=token, use_auth_token=True).to(self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token, use_auth_token=True)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     def generate_response(self, player_input, context):
         """
