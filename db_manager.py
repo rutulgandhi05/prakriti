@@ -32,13 +32,10 @@ class DBManager:
             )
             print('### Results ####')
             print(result)
-            print('### Results ####')
             record = result.single()
             if record:
-                desc = record["description"], npcs = record["npcs"]
-            desc = '', npcs =[]
-        
-        return (desc, npcs)
+                return record["description"], record["npcs"]
+            return '', []
 
     def get_next_scene_options(self, current_scene_id):
         """

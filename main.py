@@ -6,13 +6,7 @@ from image_manager import ImageManager
 
 # Simulated inputs to automate gameplay for testing
 # You can adjust the actions and scene choices as needed
-simulated_inputs = [
-    {"type": "action", "value": "explore the forest"},
-    {"type": "scene_choice", "value": 2},
-    {"type": "action", "value": "talk to the old traveler"},
-    {"type": "scene_choice", "value": 4},
-    {"type": "action", "value": "inspect the ruins"},
-]
+
 
 def display_scene(scene_id, description, image_path, npcs):
     """Display the current scene description, NPCs, and image."""
@@ -28,6 +22,14 @@ def display_scene(scene_id, description, image_path, npcs):
         print("No image available for this scene.")
 
 def main():
+    simulated_inputs = [
+        {"type": "action", "value": "explore the forest"},
+        {"type": "scene_choice", "value": 2},
+        {"type": "action", "value": "talk to the old traveler"},
+        {"type": "scene_choice", "value": 4},
+        {"type": "action", "value": "inspect the ruins"},
+    ]
+
     # Initialize components
     dbmanager = DBManager()
     dialogue_manager = DialogueManager()
