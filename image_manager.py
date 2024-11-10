@@ -41,4 +41,5 @@ class ImageManager:
         # Save the image with a unique name based on the scene ID
         image_path = os.path.join(self.save_directory, f"{scene_id}_scene.png")
         image.save(image_path)
+        torch.cuda.empty_cache()
         return image_path
