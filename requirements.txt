@@ -6,3 +6,8 @@ torch
 huggingface-hub
 
 neo4j
+
+diffusers
+
+Pillow
+requests
