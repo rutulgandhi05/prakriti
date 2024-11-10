@@ -17,6 +17,8 @@ class ImageManager:
         self.save_directory = save_directory
         os.makedirs(self.save_directory, exist_ok=True)
 
+        self.image_index = 1
+
 
     def generate_image(self, prompt, scene_id):
         """
@@ -37,7 +39,7 @@ class ImageManager:
         image = pipe(prompt=prompt, num_inference_steps=35, guidance_scale=7).images[0]
 
         # Save the image with a unique name based on the scene ID
-        image_path = os.path.join(self.save_directory, f"{scene_id}_scene.png")
+        image_path = os.path.join(self.save_directory, f"scene_{scene_id}_{self.image_index}_.png")
         image.save(image_path)
 
         
