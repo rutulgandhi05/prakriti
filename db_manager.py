@@ -34,7 +34,7 @@ class DBManager:
             record = result.single()
             if record:
                 return record["description"], record["npcs"]
-            return None, []
+            return '', []
 
     def get_next_scene_options(self, current_scene_id):
         """
