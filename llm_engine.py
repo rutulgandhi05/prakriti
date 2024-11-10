@@ -8,9 +8,7 @@ login(token="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")
 class LLMEngine:
     def __init__(self, model_name="mistralai/Mistral-7B-v0.1"):
         # Load the Mistral 7B model and tokenizer
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model_name = model_name
 
     def generate_response(self, player_input):
         """
@@ -23,13 +21,19 @@ class LLMEngine:
         Returns:
             str: Generated response from the LLM.
         """
+        model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16)
+        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
         # Construct the prompt for the model
         prompt = player_input
-        
+
         # Tokenize and generate the response
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(inputs.input_ids, max_length=150, temperature=0.7)
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
+        outputs = model.generate(inputs.input_ids, max_length=150, temperature=0.7)
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        del model
+        del tokenizer
         torch.cuda.empty_cache()
         return response.strip()
 

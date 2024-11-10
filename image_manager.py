@@ -33,10 +33,8 @@ class ImageManager:
         pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
         pipe.to("cuda")
         
-        with torch.no_grad():
-            image = pipe(prompt=prompt).images[0]
-
-
+    
+        image = pipe(prompt=prompt, num_inference_steps=35, guidance_scale=7).images[0]
 
         # Save the image with a unique name based on the scene ID
         image_path = os.path.join(self.save_directory, f"{scene_id}_scene.png")
