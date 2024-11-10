@@ -10,7 +10,7 @@ class LLMEngine:
         # Load the Mistral 7B model and tokenizer
         self.model_name = model_name
 
-    def generate_response(self, player_input, mode='general'):
+    def generate_response(self, player_input):
         """
         Generate an NPC response based on the player input and scene context.
         
@@ -29,10 +29,9 @@ class LLMEngine:
 
         # Tokenize and generate the response
         inputs = tokenizer(prompt, return_tensors="pt").to('cuda')
-        if mode == 'SD':
-            outputs = model.generate(inputs.input_ids, max_length=150, temperature=0.7)
-        else:
-            outputs = model.generate(inputs.input_ids, temperature=0.7)
+    
+        outputs = model.generate(inputs.input_ids, max_length=1000, temperature=0.7)
+       
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
