@@ -170,7 +170,8 @@ output_*
 data/
 llm_master/config.yaml
 .vscode/
-
+creds/
+configs/neo4j.json
 error.txt
 output.txt
 cc.txt

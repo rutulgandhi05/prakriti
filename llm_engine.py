@@ -29,7 +29,7 @@ class LLMEngine:
                     
                     The player says: "{player_input}"
                     
-                    Respond appropriately as the NPC. Reply in the format " I = say: '...' "
+                    Respond appropriately as the NPC.
                     """
         
         # Tokenize and generate the response
