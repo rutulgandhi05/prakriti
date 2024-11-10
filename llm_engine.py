@@ -25,12 +25,12 @@ class LLMEngine:
         """
         # Construct the prompt for the model
         prompt = f"""
-        You are an NPC in a narrative-driven game. The current scene context is as follows: {context}
-        
-        The player says: "{player_input}"
-        
-        Respond appropriately as the NPC.
-        """
+                    You are an NPC in a narrative-driven game. The current scene context is as follows: {context}
+                    
+                    The player says: "{player_input}"
+                    
+                    Respond appropriately as the NPC. Reply in the format " I = say: '...' "
+                    """
         
         # Tokenize and generate the response
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
