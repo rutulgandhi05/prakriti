@@ -3,7 +3,7 @@ import os
 import torch
 
 from PIL import Image
-from diffusers import StableDiffusionXLPipeline
+from diffusers import StableDiffusionXLPipeline, DiffusionPipeline
 
 
 class ImageManager:
@@ -16,17 +16,8 @@ class ImageManager:
         """
         self.save_directory = save_directory
         os.makedirs(self.save_directory, exist_ok=True)
-        
-        # Load the SDXL model
-        self.pipeline = self.get_pipe()
 
-    def get_pipe(self):
-        return StableDiffusionXLPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0", 
-            torch_dtype=torch.float16
-        ).to("cuda")
 
-    
     def generate_image(self, prompt, scene_id):
         """
         Generate an image based on the prompt using SDXL.
@@ -39,12 +30,19 @@ class ImageManager:
             str: Path to the saved image file.
         """
         # Generate the image using the prompt
+        pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16)
+        pipe.to("cuda")
+        
         with torch.no_grad():
-            image = self.pipeline(prompt=prompt).images[0]
+            image = pipe(prompt=prompt).images[0]
+
+
 
         # Save the image with a unique name based on the scene ID
         image_path = os.path.join(self.save_directory, f"{scene_id}_scene.png")
         image.save(image_path)
+
+        
+        del pipe
         torch.cuda.empty_cache()
-        del self.pipeline
         return image_path
