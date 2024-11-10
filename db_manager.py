@@ -35,7 +35,7 @@ class DBManager:
                 MATCH (s:Scene {id: $current_scene_id})-[:LEADS_TO]->(next:Scene)
                 RETURN next.id AS id, next.description AS description
                 """,
-                current_scene_id='4:945c887e-7758-40ce-bbe0-6cf84500b9f6:0'
+                current_scene_id=current_scene_id
             )
             return [{"id": record["id"], "description": record["description"]} for record in result]
 

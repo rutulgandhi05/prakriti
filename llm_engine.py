@@ -35,5 +35,5 @@ class LLMEngine:
         del model
         del tokenizer
         torch.cuda.empty_cache()
-        return response.strip()
+        return response[len(prompt):].strip()
 
