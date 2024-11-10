@@ -5,7 +5,7 @@ class DBManager:
     def __init__(self):
         # Initialize the Neo4j driver with AuraDB connection details
         NEO4J = json.load(open('configs/neo4j.json'))
-        self.driver = GraphDatabase.driver(NEO4J['uri'], auth=(NEO4J["NEO4J_USERNAME"], NEO4J["NEO4J_PASSWORD"]))
+        self.driver = GraphDatabase.driver(NEO4J['NEO4J_URI'], auth=(NEO4J["NEO4J_USERNAME"], NEO4J["NEO4J_PASSWORD"]))
 
     def close(self):
         """Close the Neo4j database connection."""
