@@ -30,7 +30,7 @@ class LLMEngine:
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         outputs = self.model.generate(inputs.input_ids, max_length=150, temperature=0.7)
         response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
+        torch.cuda.empty_cache()
         return response.strip()
 
 # Example test for LLMEngine
