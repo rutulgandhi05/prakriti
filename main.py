@@ -1,25 +1,25 @@
-# main.py
-
 from dialogue_manager import DialogueManager
 from db_manager import DBManager
 from image_manager import ImageManager
 
-# Simulated inputs to automate gameplay for testing
-# You can adjust the actions and scene choices as needed
-
 
 def display_scene(scene_id, description, image_path, npcs):
     """Display the current scene description, NPCs, and image."""
-    print(f"\nScene {scene_id}: {description}")
+
+    display_text = []
+    
+    display_text.append(f"\nScene {scene_id}: {description}")
     if npcs:
-        print("NPCs Present:", ", ".join(npcs))
+        display_text.append("NPCs Present:", ", ".join(npcs))
     if image_path:
         try:
-            print(image_path)
+            display_text.append(image_path)
         except Exception as e:
-            print("Could not display image:", e)
+            display_text.append("Could not display image:", e)
     else:
-        print("No image available for this scene.")
+        display_text.append("No image available for this scene.")
+
+    print(''.join(display_text).replace(',', ' '))
 
 def main():
     simulated_inputs = [
@@ -40,16 +40,17 @@ def main():
     current_scene_id = 1
     input_index = 0
 
+    print("Starting the automated adventure test...\n")
     while input_index < 5:
         # Retrieve and display the current scene details
-        print("Starting the automated adventure test...\n")
-
         record = dbmanager.get_scene_by_id(current_scene_id)
         description, npcs = record["description"], record["npcs"]
         enhanced_description = dialogue_manager.generate_enhanced_description(description)
         image_path = image_manager.generate_image(enhanced_description, current_scene_id)
         
+        print("############### INTRO ###############")
         display_scene(current_scene_id, enhanced_description, image_path, npcs)
+        print("############### INTRO ###############")
 
         # Simulated input for player action or scene choice
         simulated_input = simulated_inputs[input_index]
@@ -57,8 +58,9 @@ def main():
 
         if simulated_input["type"] == "action":
             # Process player action
+            print("\n Player: ", simulated_input["value"])
             npc_response = dialogue_manager.handle_dialogue(simulated_input["value"], current_scene_id)
-            print("\nNPC:", npc_response)
+            print("\nNPC: ", npc_response)
 
         elif simulated_input["type"] == "scene_choice":
             # Retrieve next scene options and proceed with choice
@@ -69,6 +71,7 @@ def main():
                     print(f"{option['id']}: {option['description']}")
                 
                 selected_scene = simulated_input["value"]
+                print("\n Player: ", simulated_input["value"])
                 if any(option['id'] == selected_scene for option in next_scene_options):
                     current_scene_id = selected_scene
                     print(f"Proceeding to Scene {selected_scene} based on simulated input.")
@@ -82,6 +85,7 @@ def main():
     # Close resources
     dbmanager.close()
     dialogue_manager.close()
+
     print("Automated adventure test completed. Goodbye!")
 
 if __name__ == "__main__":
