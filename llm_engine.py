@@ -36,15 +36,3 @@ class LLMEngine:
         del tokenizer
         torch.cuda.empty_cache()
         return response.strip()
-
-# Example test for LLMEngine
-if __name__ == "__main__":
-    llm_engine = LLMEngine()
-    
-    # Define sample context and player input
-    context = "The player stands before Eldara, an ancient forest guardian, in a mystical forest at dusk."
-    player_input = "I ask Eldara about the powers of the artifact."
-    
-    # Generate and print the response
-    response = llm_engine.generate_response(player_input, context)
-    print("NPC Response:", response)
