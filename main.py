@@ -57,7 +57,7 @@ def main():
 
         if simulated_input["type"] == "action":
             # Process player action
-            npc_response = dialogue_manager.handle_dialogue(simulated_input["value"])
+            npc_response = dialogue_manager.handle_dialogue(simulated_input["value"], current_scene_id)
             print("\nNPC:", npc_response)
 
         elif simulated_input["type"] == "scene_choice":
