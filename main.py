@@ -44,7 +44,8 @@ def main():
         # Retrieve and display the current scene details
         print("Starting the automated adventure test...\n")
 
-        description, npcs = dbmanager.get_scene_by_id(current_scene_id)
+        record = dbmanager.get_scene_by_id(current_scene_id)
+        description, npcs = record["description"], record["npcs"]
         enhanced_description = dialogue_manager.generate_enhanced_description(description)
         image_path = image_manager.generate_image(enhanced_description, current_scene_id)
         
