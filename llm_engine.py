@@ -12,7 +12,7 @@ class LLMEngine:
         self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def generate_response(self, player_input, context):
+    def generate_response(self, player_input):
         """
         Generate an NPC response based on the player input and scene context.
         
