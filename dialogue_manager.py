@@ -54,8 +54,7 @@ class DialogueManager:
         """
         # Prompt the LLM to expand the basic description
         prompt = (
-            f"Expand the following scene description with vivid details and atmosphere. 
-            Write the description in such a way that stable diffusion model can use this descritpion as prompt to create the described image: {basic_description}"
+            f"Expand the following scene description with vivid details and atmosphere. Write the description in such a way that stable diffusion model can use this descritpion as prompt to create the described image: {basic_description}"
         )
         
         # Generate the enhanced description
