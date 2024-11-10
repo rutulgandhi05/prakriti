@@ -29,19 +29,20 @@ def display_scene(scene_id, description, image_path, npcs):
 
 def main():
     # Initialize components
-    db_manager = DBManager()
+    dbmanager = DBManager()
     dialogue_manager = DialogueManager()
     image_manager = ImageManager(save_directory="generated_images")
 
-    print("Starting the automated adventure test...\n")
-
+    
     # Set initial scene ID and simulated input index
     current_scene_id = 1
     input_index = 0
 
     while input_index < len(simulated_inputs):
         # Retrieve and display the current scene details
-        description, npcs = db_manager.get_scene_by_id(current_scene_id)
+        print("Starting the automated adventure test...\n")
+
+        description, npcs = dbmanager.get_scene_by_id(current_scene_id)
         enhanced_description = dialogue_manager.generate_enhanced_description(description)
         image_path = image_manager.generate_image(enhanced_description, current_scene_id)
         
@@ -58,7 +59,7 @@ def main():
 
         elif simulated_input["type"] == "scene_choice":
             # Retrieve next scene options and proceed with choice
-            next_scene_options = db_manager.get_next_scene_options(current_scene_id)
+            next_scene_options = dbmanager.get_next_scene_options(current_scene_id)
             if next_scene_options:
                 print("\nAvailable Paths:")
                 for option in next_scene_options:
@@ -76,7 +77,7 @@ def main():
                 break
 
     # Close resources
-    db_manager.close()
+    dbmanager.close()
     dialogue_manager.close()
     print("Automated adventure test completed. Goodbye!")
 
