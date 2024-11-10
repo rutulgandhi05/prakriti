@@ -12,15 +12,7 @@ class DBManager:
         self.driver.close()
 
     def get_scene_by_id(self, scene_id):
-        """
-        Retrieve the description and any NPCs in a given scene by scene ID.
         
-        Args:
-            scene_id (int): The ID of the scene to retrieve.
-        
-        Returns:
-            tuple: A tuple containing the scene description and a list of NPC names.
-        """
         with self.driver.session() as session:
             result = session.run(
                 """
@@ -30,30 +22,20 @@ class DBManager:
                 """,
                 scene_id=scene_id
             )
-            print('### Results ####')
-            print(result)
             record = result.single()
             if record:
                 return record
         
 
     def get_next_scene_options(self, current_scene_id):
-        """
-        Retrieve possible next scenes based on the current scene.
-        
-        Args:
-            current_scene_id (int): The ID of the current scene.
-        
-        Returns:
-            list: A list of dictionaries, each containing the next scene's ID and description.
-        """
+   
         with self.driver.session() as session:
             result = session.run(
                 """
                 MATCH (s:Scene {id: $current_scene_id})-[:LEADS_TO]->(next:Scene)
                 RETURN next.id AS id, next.description AS description
                 """,
-                current_scene_id=current_scene_id
+                current_scene_id='4:945c887e-7758-40ce-bbe0-6cf84500b9f6:0'
             )
             return [{"id": record["id"], "description": record["description"]} for record in result]
 
@@ -119,42 +101,4 @@ class DBManager:
                 """
             )
             print("Scene, NPC, and relationship data created successfully (if not already existing).")
-
-    def get_scene_by_id(self, scene_id):
-        """
-        Retrieve a scene's context based on its ID.
-        
-        Args:
-            scene_id (int): The ID of the scene to retrieve.
-        
-        Returns:
-            str: The context of the scene.
-        """
-        with self.driver.session() as session:
-            result = session.run(
-                "MATCH (s:Scene {id: $scene_id}) RETURN s.context AS context",
-                scene_id=scene_id
-            )
-            record = result.single()
-            return record["context"] if record else None
-
-    def get_next_scene_options(self, current_scene_id):
-        """
-        Retrieve possible next scenes based on the current scene.
-        
-        Args:
-            current_scene_id (int): The ID of the current scene.
-        
-        Returns:
-            list of dict: List of possible next scenes with ID and context.
-        """
-        with self.driver.session() as session:
-            result = session.run(
-                """
-                MATCH (s:Scene {id: $current_scene_id})-[:LEADS_TO]->(next:Scene)
-                RETURN next.id AS id, next.context AS context
-                """,
-                current_scene_id=current_scene_id
-            )
-            return [{"id": record["id"], "context": record["context"]} for record in result]
 
