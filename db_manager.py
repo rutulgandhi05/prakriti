@@ -30,7 +30,9 @@ class DBManager:
                 """,
                 scene_id=scene_id
             )
+            print('### Results ####')
             print(result)
+            print('### Results ####')
             record = result.single()
             if record:
                 return record["description"], record["npcs"]
