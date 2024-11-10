@@ -3,11 +3,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 class LLMEngine:
-    def __init__(self, model_name="mistralai/Mistral-7B-v0.1"):
+    def __init__(self, model_name="mistralai/Mistral-7B-v0.1", token="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"):
         # Load the Mistral 7B model and tokenizer
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, use_auth_token=token).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=token)
 
     def generate_response(self, player_input, context):
         """
