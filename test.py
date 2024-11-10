@@ -1,26 +1,8 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
-from huggingface_hub import login
+from db_manager import DBManager
 
-torch.cuda.empty_cache()
+db_manager = DBManager(password="your_password")
+initial_scene = db_manager.get_scene_by_id(1)
+next_scenes = db_manager.get_next_scene_options(1)
+db_manager.close()
 
-login(token="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")
-
-# Load the tokenizer and model
-model_path = "nvidia/Mistral-NeMo-Minitron-8B-Base"
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-device = 'cuda'
-dtype = torch.bfloat16
-model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=dtype)
-
-# Prepare the input text
-prompt = 'Hey how are you? Can i go from london to paris by train?'
-inputs = tokenizer.encode(prompt, return_tensors='pt').to(model.device)
-
-# Generate the output
-outputs = model.generate(inputs, max_length=20)
-
-# Decode and print the output
-output_text = tokenizer.decode(outputs[0])
-print(output_text)
+print(initial_scene)

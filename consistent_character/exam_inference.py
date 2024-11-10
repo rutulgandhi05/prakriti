@@ -169,6 +169,7 @@ def training_images(args, prompt):
             negative_prompt=n_prompt,
             num_inference_steps=n_steps,
             denoising_end=high_noise_frac,
+            guidance_scale=8,
             output_type="latent"
         ).images
 
