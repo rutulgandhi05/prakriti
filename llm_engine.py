@@ -21,7 +21,7 @@ class LLMEngine:
         Returns:
             str: Generated response from the LLM.
         """
-        model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16)
+        model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16).to('cuda')
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
         # Construct the prompt for the model
