@@ -28,7 +28,7 @@ class LLMEngine:
         prompt = player_input
 
         # Tokenize and generate the response
-        inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
+        inputs = tokenizer(prompt, return_tensors="pt")
         outputs = model.generate(inputs.input_ids, max_length=150, temperature=0.7)
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
