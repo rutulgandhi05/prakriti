@@ -38,7 +38,7 @@ def main():
     current_scene_id = 1
     input_index = 0
 
-    while input_index < len(simulated_inputs):
+    while input_index < 5:
         # Retrieve and display the current scene details
         print("Starting the automated adventure test...\n")
 
