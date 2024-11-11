@@ -67,8 +67,8 @@ def main():
         
         if simulated_input["type"] == "action":
             # Process player action
-            logging.info(f"\n Player: {simulated_input["value"]}")
-            npc_response = dialogue_manager.handle_dialogue(simulated_input["value"], current_scene_id)
+            logging.info(f"\n Player: {simulated_input['value']}")
+            npc_response = dialogue_manager.handle_dialogue(simulated_input['value'], current_scene_id)
             logging.info(f"\nNPC: {npc_response} ")
 
         elif simulated_input["type"] == "scene_choice":
@@ -80,7 +80,7 @@ def main():
                     logging.info(f"{option['id']}: {option['description']}")
                 
                 selected_scene = simulated_input["value"]
-                logging.info(f"\n Player: {simulated_input["value"]}" )
+                logging.info(f"\n Player: {simulated_input['value']}" )
                 if any(option['id'] == selected_scene for option in next_scene_options):
                     current_scene_id = selected_scene
                     logging.info(f"Proceeding to Scene {selected_scene} based on simulated input.")
