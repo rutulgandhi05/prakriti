@@ -5,7 +5,7 @@ from db_manager import DBManager
 from image_manager import ImageManager
 
 logging.basicConfig(
-    filename="game_logs.log",
+    filename="game_logs.txt",
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
@@ -67,35 +67,35 @@ def main():
         
         if simulated_input["type"] == "action":
             # Process player action
-            logging.info("\n Player: ", simulated_input["value"])
+            logging.info(f"\n Player: {simulated_input["value"]}")
             npc_response = dialogue_manager.handle_dialogue(simulated_input["value"], current_scene_id)
-            logging.info("\nNPC: ", npc_response)
+            logging.info(f"\nNPC: {npc_response} ")
 
         elif simulated_input["type"] == "scene_choice":
             # Retrieve next scene options and proceed with choice
             next_scene_options = dbmanager.get_next_scene_options(current_scene_id)
             if next_scene_options:
-                print("\nAvailable Paths:")
+                logging.info("\nAvailable Paths:")
                 for option in next_scene_options:
-                    print(f"{option['id']}: {option['description']}")
+                    logging.info(f"{option['id']}: {option['description']}")
                 
                 selected_scene = simulated_input["value"]
-                print("\n Player: ", simulated_input["value"])
+                logging.info(f"\n Player: {simulated_input["value"]}" )
                 if any(option['id'] == selected_scene for option in next_scene_options):
                     current_scene_id = selected_scene
-                    print(f"Proceeding to Scene {selected_scene} based on simulated input.")
+                    logging.info(f"Proceeding to Scene {selected_scene} based on simulated input.")
                 else:
-                    print("Invalid simulated scene selection. Ending test.")
+                    logging.info("Invalid simulated scene selection. Ending test.")
                     break
             else:
-                print("\nNo further paths from this scene. The adventure ends here.")
+                logging.info("\nNo further paths from this scene. The adventure ends here.")
                 break
 
     # Close resources
     dbmanager.close()
     dialogue_manager.close()
 
-    print("Automated adventure test completed. Goodbye!")
+    logging.info("Automated adventure test completed. Goodbye!")
 
 if __name__ == "__main__":
     main()
