@@ -14,13 +14,14 @@ class LLMEngine:
         self.model_name = model_name
 
     def generate_response(self, player_input):
-        logging.info(f"Generating response with prompt: {prompt}")
+        
         model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16).to('cuda')
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
         # Construct the prompt for the model
         prompt = player_input
 
+        logging.info(f"Generating response with prompt: {prompt}")
         # Tokenize and generate the response
         inputs = tokenizer([prompt], return_tensors="pt").to('cuda')
     
