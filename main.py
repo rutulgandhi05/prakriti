@@ -4,7 +4,11 @@ from dialogue_manager import DialogueManager
 from db_manager import DBManager
 from image_manager import ImageManager
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    filename="game_logs.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 def display_scene(scene_id, description, image_path, npcs):
     logging.info(f"Displaying scene {scene_id}")
