@@ -1,10 +1,13 @@
-# dialogue_manager.py
+import logging
 from db_manager import DBManager
 from llm_engine import LLMEngine
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 class DialogueManager:
     def __init__(self):
-        # Initialize the database manager for scene and NPC data
+        logging.info("Initializing DialogueManager")
         self.db_manager = DBManager()
         self.llm_engine = LLMEngine()
 
@@ -16,31 +19,18 @@ class DialogueManager:
         self.db_manager.close()
 
     def handle_dialogue(self, player_input, scene_id):
-        """
-        Process the player's input and generate an NPC response.
-        
-        Args:
-            player_input (str): The input provided by the player.
-            scene_id (int): The ID of the current scene to provide context.
-        
-        Returns:
-            str: The NPC's response to the player's input.
-        """
+        logging.info(f"Handling dialogue for scene ID: {scene_id} with player input: {player_input}")
         # Retrieve scene description and NPCs for the current scene
         description, npcs = self.db_manager.get_scene_by_id(scene_id)
         
         # Format prompt with scene description, NPC context, and player input
-        prompt = (
-            f"Scene description: {description}. "
-            f"NPCs present: {', '.join(npcs) if npcs else 'None'}. "
-            f"Player says: {player_input}. "
-            f"Respond as one of the NPCs if possible or describe the environment."
-        )
+        prompt = f'''Scene description: {description}. NPCs present: {', '.join(npcs) if npcs else 'None'}. Player says: {player_input}. Respond as one of the NPCs if possible or describe the environment. Response in format [npc_name]: Dialouge '''
+           
         
         # Generate response from LLM
         npc_response = self.llm_engine.generate_response(prompt)
         
-        return npc_response
+        return npc_response.replace(prompt, '')
 
     def generate_enhanced_description(self, basic_description):
         """
@@ -55,14 +45,13 @@ class DialogueManager:
         # Prompt the LLM to expand the basic description
 
         prompt_str = 'Act as a professional prompt engineer. Write a prompt for Stable diffusion XL model, text to image generation. The prompt should be not more than 70 tokens. Use the following text as base description of the scene:'
-        prompt = (
-            f"{prompt_str} {basic_description}"
-        )
+        prompt = f"{prompt_str} {basic_description}"
+        
         
         # Generate the enhanced description
         enhanced_description = self.llm_engine.generate_response(prompt)
         
-        return enhanced_description
+        return enhanced_description.replace(prompt, '')
 
     def check_scene_transition_conditions(self, player_input, current_scene_id):
         """

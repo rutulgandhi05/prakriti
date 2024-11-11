@@ -1,16 +1,19 @@
+import logging
+
 from dialogue_manager import DialogueManager
 from db_manager import DBManager
 from image_manager import ImageManager
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def display_scene(scene_id, description, image_path, npcs):
-    """Display the current scene description, NPCs, and image."""
+    logging.info(f"Displaying scene {scene_id}")
 
     display_text = []
     
     display_text.append(f"\nScene {scene_id}: {description}")
     if npcs:
-        display_text.append("NPCs Present:", ", ".join(npcs))
+        display_text.append("NPCs Present:"+ ", ".join(npcs))
     if image_path:
         try:
             display_text.append(image_path)
@@ -19,7 +22,7 @@ def display_scene(scene_id, description, image_path, npcs):
     else:
         display_text.append("No image available for this scene.")
 
-    print(''.join(display_text).replace(',', ' '))
+    logging.info(''.join(display_text).replace(',', ' '))
 
 def main():
     simulated_inputs = [
@@ -29,6 +32,8 @@ def main():
         {"type": "scene_choice", "value": 4},
         {"type": "action", "value": "inspect the ruins"},
     ]
+
+    logging.info("Starting main game loop")
 
     # Initialize components
     dbmanager = DBManager()
@@ -40,27 +45,27 @@ def main():
     current_scene_id = 1
     input_index = 0
 
-    print("Starting the automated adventure test...\n")
     while input_index < 5:
-        # Retrieve and display the current scene details
+        logging.info("Intro")
         record = dbmanager.get_scene_by_id(current_scene_id)
         description, npcs = record["description"], record["npcs"]
+
+        if not description:
+            logging.error(f"Scene ID {current_scene_id} not found, ending game.")
+            break
+
         enhanced_description = dialogue_manager.generate_enhanced_description(description)
         image_path = image_manager.generate_image(enhanced_description, current_scene_id)
-        
-        print("############### INTRO ###############")
-        display_scene(current_scene_id, enhanced_description, image_path, npcs)
-        print("############### INTRO ###############")
-
+       
         # Simulated input for player action or scene choice
         simulated_input = simulated_inputs[input_index]
         input_index += 1
-
+        
         if simulated_input["type"] == "action":
             # Process player action
-            print("\n Player: ", simulated_input["value"])
+            logging.info("\n Player: ", simulated_input["value"])
             npc_response = dialogue_manager.handle_dialogue(simulated_input["value"], current_scene_id)
-            print("\nNPC: ", npc_response)
+            logging.info("\nNPC: ", npc_response)
 
         elif simulated_input["type"] == "scene_choice":
             # Retrieve next scene options and proceed with choice

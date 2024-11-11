@@ -1,5 +1,9 @@
 import json
+import logging
 from neo4j import GraphDatabase
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class DBManager:
     def __init__(self):
@@ -12,7 +16,8 @@ class DBManager:
         self.driver.close()
 
     def get_scene_by_id(self, scene_id):
-        
+        logging.info(f"Fetching scene with ID: {scene_id}")
+        logging.info(f"Getting next scenes for current scene ID: {scene_id}")
         with self.driver.session() as session:
             result = session.run(
                 """
