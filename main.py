@@ -54,7 +54,7 @@ def main():
         CharacterAction(
             command="Say",
             protagonist=protagonist,
-            parameters=[items[0], "What a fine sword!", []],
+            parameters=[str(items[0]), "What a fine sword!"],
         )
     ]
 
