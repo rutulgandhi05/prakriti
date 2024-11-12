@@ -20,15 +20,8 @@ class NPCStepper:
     def __init__(
         self,
         model: str | models.LogitsGenerator,
-        api_key: str | None = None,
-        api_url: str = "https://gig.ax/llm/v1",
     ):
         self.model = model
-        self.api_key = api_key
-        self.api_url = api_url
-
-        if isinstance(model, str) and not self.api_key:
-            raise ValueError("You must provide an API key to use our API.")
 
         if not isinstance(model, (models.LlamaCpp, models.Transformers)):
             raise NotImplementedError(
@@ -38,7 +31,7 @@ class NPCStepper:
     def _generate(
         self, prompt: str | list[dict[str, str]], guided_regex: str
     ) -> str:
-        return self.generate_local(self.model, prompt, guided_regex)
+        return self.generate_local(prompt, self.model, guided_regex)
         
 
     def generate_local(
