@@ -22,17 +22,15 @@ class CharacterAction(BaseModel):
     """CharacterAction class to represent a character action."""
 
     command: str
-    protagonist: str
-    parameters: list[Union[str, bool, int]]
+    protagonist: ProtagonistCharacter
+    parameters: list[Union[str, int]]
 
     def __str__(self) -> str:
         """
         Print the action according to the training format: cmd_name param1 param2.
         e.g.: Alice: say Bob "Hello, how are you"
         """
-        return (
-            f"{self.protagonist}: {self.command} {' '.join(map(str, self.parameters))}"
-        )
+        return f"{self.protagonist.name}: {self.command} {' '.join(map(str, self.parameters))}"
 
     @staticmethod
     def from_str(

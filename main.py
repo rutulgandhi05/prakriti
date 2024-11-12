@@ -53,7 +53,7 @@ def main():
     events = [
         CharacterAction(
             command="Say",
-            protagonist=protagonist,
+            protagonist=protagonist.name,
             parameters=[str(items[0]), "What a fine sword!"],
         )
     ]
