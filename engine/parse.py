@@ -2,12 +2,14 @@
 
 import logging
 import re
-
 from typing import Union
-from pydantic import BaseModel
-from engine.scene import Item, Object, Location, Character, ProtagonistCharacter, Skill
 
-logger = logging.getLogger("npc_parse")
+from pydantic import BaseModel
+
+from engine.scene import Item, Location, Character, NarratorCharacter, ProtagonistCharacter, Skill
+
+
+logger = logging.getLogger("uvicorn")
 
 
 class ActionParsingError(Exception):
@@ -20,15 +22,17 @@ class CharacterAction(BaseModel):
     """CharacterAction class to represent a character action."""
 
     command: str
-    protagonist: ProtagonistCharacter
-    parameters: list[Union[str, int, Object]]
+    protagonist: str
+    parameters: list[Union[str, bool, int]]
 
     def __str__(self) -> str:
         """
         Print the action according to the training format: cmd_name param1 param2.
         e.g.: Alice: say Bob "Hello, how are you"
         """
-        return f"{self.protagonist.name}: {self.command} {' '.join(map(str, self.parameters))}"
+        return (
+            f"{self.protagonist}: {self.command} {' '.join(map(str, self.parameters))}"
+        )
 
     @staticmethod
     def from_str(
