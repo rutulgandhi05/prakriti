@@ -3,7 +3,7 @@ import torch
 from outlines import models
 from engine.step import NPCStepper
 from engine.parse import CharacterAction
-from engine.scene import Character, Item, Location, ProtagonistCharacter, Skill, ParameterType
+from engine.scene import Character, Item, Location, ProtagonistCharacter, Skill, ParameterType, NarratorCharacter
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -68,6 +68,22 @@ def main():
     )
     
     logging.info(f"Aldren: {action}")
+
+    narrator = NarratorCharacter(name="Narrator", 
+                                 description="Act as a narrator for rpg.", 
+                                 skills=["guide player", "narrate scene", "can start quest"],
+                                 quests=["Find the ancient artifact", "Defeat the evil warlock"],
+                                 completedQuests=[])
+
+    narr = stepper.get_narrator_update(
+        context=context,
+        locations=locations,
+        NPCs=NPCs,
+        protagonist=protagonist,
+        items=items,
+        events=events,
+    )
+    logging.info(f"Narrator: {narr}")
 
     del model
     del tokenizer
