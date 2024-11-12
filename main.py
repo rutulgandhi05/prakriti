@@ -1,11 +1,11 @@
 import logging
+import torch
 from outlines import models
-from llama_cpp import Llama
 from engine.step import NPCStepper
 from engine.parse import CharacterAction
 from engine.scene import Character, Item, Location, ProtagonistCharacter, Skill, ParameterType
 
-
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 logging.basicConfig(
@@ -15,15 +15,11 @@ logging.basicConfig(
 )
 
 def main():
-    llm = Llama.from_pretrained(
-        repo_id="Gigax/NPC-LLM-3_8B-GGUF",
-        filename="npc-llm-3_8B.gguf",
-        # n_gpu_layers=-1, 
-        n_ctx=2048, 
-        )
-    
+    model_name = "Gigax/NPC-LLM-7B"
+    llm = AutoModelForCausalLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
  
-    model = models.LlamaCpp(llm) 
+    model = models.Transformers(llm, tokenizer)
 
     stepper = NPCStepper(model=model)
 
@@ -72,6 +68,10 @@ def main():
     )
     
     logging.info(f"Aldren: {action}")
+
+    del model
+    del tokenizer
+    torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     main()

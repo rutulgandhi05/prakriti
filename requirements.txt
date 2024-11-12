@@ -6,6 +6,5 @@ diffusers
 Pillow
 requests
 accelerate
-llama-cpp-python
 outlines
 python-dotenv
