@@ -33,28 +33,27 @@ class CharacterAction(BaseModel):
     @staticmethod
     def from_str(
         command_str: str,
-        protagonist: ProtagonistCharacter,
-        valid_characters: list[Character],
-        valid_locations: list[Location],
-        valid_items: list[Item],
+        protagonist: ProtagonistCharacter | NarratorCharacter,
         compiled_regex: re.Pattern,
     ) -> "CharacterAction":
         """
         Parse a command string into a CharacterAction object.
         """
 
+        logger.info(f"Command string: {command_str}")
         match = compiled_regex.match(command_str)
         if not match:
             raise ValueError("Invalid command format")
 
+        # For commands without parameters, use the whole match as the command
         if match.lastgroup is None:
-            raise ValueError(
-                f"Could not find a matching skill in command_str '{command_str}'"
-            )
+            command = match.group(0)
+        else:
+            # Extract the command_name while supporting multiple _ in lastgroup
+            command = "_".join(match.lastgroup.split("_")[:-2])
 
-        command = match.lastgroup.split("_")[0]  # Extract command name
         action = CharacterAction(
-            command=command, protagonist=protagonist, parameters=[]
+            command=command, protagonist=protagonist.name, parameters=[]
         )
 
         # Extract parameters based on their named groups
@@ -62,27 +61,24 @@ class CharacterAction(BaseModel):
             if not value:
                 continue
 
-            param_type = group_name[
-                len(f"{command}_") :
-            ]  # Remove command prefix to get parameter type
+            # Remove command prefix to get parameter type
+            param_type = group_name[len(f"{command}_") :].split("_")[0]
 
+            logger.info(f"Parameter type: {param_type}")
             # Add parameters based on their type
-            if param_type == "character":
-                # Assuming characters are directly referred by name
-                action.parameters.append(
-                    next(char for char in valid_characters if char.name == value),
-                )
-            elif param_type == "location":
-                action.parameters.append(
-                    next(loc for loc in valid_locations if loc.name == value),
-                )
-            elif param_type == "item":
-                action.parameters.append(
-                    next(item for item in valid_items if item.name == value)
-                )
+            if param_type in [
+                "character",
+                "NPC",
+                "item",
+                "boolean",
+                "entity",
+                "location",
+            ]:
+                # Assuming these are directly referred by name
+                action.parameters.append(value)
             elif param_type == "amount":
                 action.parameters.append(int(value))
-            elif param_type == "content":
+            elif param_type == "content" or param_type == "quest":
                 # Remove quotation marks if present
                 action.parameters.append(value.strip('"'))
 
@@ -94,6 +90,7 @@ def get_guided_regex(
     authorized_characters: list[Character],
     authorized_locations: list[Location],
     authorized_items: list[Item],
+    authorized_quests: list[str] = [],
 ) -> re.Pattern:
     """
     Generate a combined regex pattern for all the skills of the protagonist.
@@ -105,8 +102,11 @@ def get_guided_regex(
 
     # Generate a combined regex pattern for all skills
     combined_regex_parts = [
-        skill.to_regex(characters_names, locations_names, items_names)
+        skill.to_regex(
+            characters_names, locations_names, items_names, authorized_quests
+        )
         for skill in skills
     ]
     combined_regex = "|".join(combined_regex_parts)
+    logger.info(f"Combined regex: {combined_regex}")
     return re.compile(combined_regex, re.IGNORECASE)
