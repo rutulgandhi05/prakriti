@@ -1,14 +1,11 @@
-
 transformers
-
 torch
-
 huggingface-hub
-
 neo4j
-
 diffusers
-
 Pillow
 requests
 accelerate
+llama-cpp-python
+outlines
+python-dotenv
