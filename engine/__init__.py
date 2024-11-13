@@ -59,14 +59,14 @@ class Erin():
         locations=[Location(name="Entrance of village", description="At the entrance of the village there is a gate which is a beautiful landmark."), 
                    Location(name="Dark Forest", description="There is a dense forest on the west outskirts of the village."), 
                    Location(name="Town House", description="In the middle of the village there is a town house. It is often used for public gatherings.")]
-        NPCs=[Character(name="Lyra", description="A herbelist. Well versed with ayurveda.", current_location="Dark forest")]
+        NPCs=[Character(name="Lyra", description="A herbelist. Well versed with ayurveda.", current_location=Location(name="Dark Forest", description="There is a dense forest on the west outskirts of the village."))]
        
         protagonist=ProtagonistCharacter(
             name= "Erin",
             description="Gaurd of the village. Brave and skilled in combat.",
             current_location=Location(name="Entrance of village", description="At the entrance of the village there is a gate which is a beautiful landmark."),
             memories=[],
-            quests= [Quest(name="Save village", description="save the village from attackers and gaurd the main gate.", entity="Village")],
+            quests= ["save the village from attackers and gaurd the main gate."],
             skills=[Skill(name="talk", description="Talk to anyone.", parameter_types=[ParameterType.character])]
         )
         
@@ -113,8 +113,8 @@ class Master(NARRATOR):
                    Location("Dark Forest", "There is a dense forest on the west outskirts of the village."), 
                    Location("Town House", "In the middle of the village there is a town house. It is often used for public gatherings.")]
         
-        NPCs=[Character("Lyra", "A herbelist. Well versed with ayurveda.", "Dark forest"), 
-              Character("Erin", "Gaurd of the village. Brave and skilled in combat.", "Entrance of the village")]
+        NPCs=[Character("Lyra", "A herbelist. Well versed with ayurveda.", Location("Dark Forest", "There is a dense forest on the west outskirts of the village.")), 
+              Character("Erin", "Gaurd of the village. Brave and skilled in combat.", Location("Entrance of village", "At the entrance of the village there is a gate which is a beautiful landmark."))]
        
         protagonist=ProtagonistCharacter(
             name= "Erin",
