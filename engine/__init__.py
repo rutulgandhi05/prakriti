@@ -33,7 +33,7 @@ class Erin():
 
     
     def prompt(self, prompt):
-        ch_prompt = CharacterAction(command= "say", protagonist="Lyra", parameters= [prompt])
+        ch_prompt = CharacterAction(command="say", protagonist="Lyra", parameters= [prompt])
         self.remember_interaction(ch_prompt)
 
         events = self.events
@@ -71,8 +71,8 @@ class Erin():
         )
         
         
-        items=[Item("sword", "A big sharp blade")]
-        self.events = [CharacterAction("walk", protagonist.name, ["towards gate"] )]
+        items=[Item(name="sword", description="A big sharp blade")]
+        self.events = [CharacterAction(command="walk", protagonist=protagonist.name, parameters=["towards gate"] )]
         
         return context, locations, NPCs, protagonist, items
        
