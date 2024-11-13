@@ -19,7 +19,7 @@ def main(model):
     
     erin = Erin(model)
 
-    res = erin.prompt("Hi How are you Erin?")
+    res = erin.prompt("Hi Erin! Will you go out on lunch with me?")
 
     print(res)
 

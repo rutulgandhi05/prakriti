@@ -65,9 +65,11 @@ class Erin():
             name= "Erin",
             description="Gaurd of the village. Brave and skilled in combat.",
             current_location=Location(name="Entrance of village", description="At the entrance of the village there is a gate which is a beautiful landmark."),
-            memories=[],
+            memories=["Lyra is wife", "has tow childern"],
             quests= ["save the village from attackers and gaurd the main gate."],
-            skills=[Skill(name="talk", description="Talk to anyone.", parameter_types=[ParameterType.character])]
+            skills=[Skill(name="combat", description="Combat one vs one", parameter_types=[ParameterType.character]),
+                    Skill(name="talk", description="have a converstation with other characheters", parameter_types=[ParameterType.character]),
+                    ]
         )
         
         
@@ -75,10 +77,6 @@ class Erin():
         self.events = [CharacterAction(command="walk", protagonist=protagonist.name, parameters=["towards gate"] )]
         
         return context, locations, NPCs, protagonist, items
-       
-    
-
-
 
 
 class NARRATOR(NPCStepper):
