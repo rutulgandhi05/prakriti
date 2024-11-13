@@ -13,7 +13,7 @@ from engine.parse import CharacterAction, ProtagonistCharacter, get_guided_regex
 
 load_dotenv()
 
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger("step")
 
 
 class NPCStepper:
@@ -136,23 +136,27 @@ class NPCStepper:
             items=items,
             events=events,
         )
+        
         logger.info(f"Prompting {narrator.name} for utterance: {prompt}")
+        
         guided_regex = get_guided_regex(narrator.skills[:1], NPCs, locations, items)
+        
         utterance = self._generate(prompt, guided_regex.pattern)
+        
         actions: list[CharacterAction] = []
         if action := self._parse_action(utterance, narrator, guided_regex):
             actions.append(action)
 
+        
         logger.info(f"{narrator.name} answered with: {utterance}")
 
         # QUESTS
         quest_prompter: Callable[[ProtagonistCharacter, str, list[Skill]], str]
         if protagonist.quests:
-            logger.info(
-                f"Protagonist has quests: {protagonist.quests}. Launching quest completion prompt."
-            )
+            logger.info(f"Protagonist has quests: {protagonist.quests}. Launching quest completion prompt.")
             quest_prompter = NarratorPromptQuestComplete
             skills = [s for s in narrator.skills if s.name == "complete_quest"]
+        
         elif not protagonist.quests:
             logger.info("Protagonist has no quests. Launching quest generation prompt.")
             quest_prompter = NarratorPromptQuestGenerate

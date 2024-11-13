@@ -1,11 +1,10 @@
-import logging
 import torch
-from outlines import models
-from engine.step import NPCStepper
-from engine.parse import CharacterAction
-from engine.scene import Character, Item, Location, ProtagonistCharacter, Skill, ParameterType, NarratorCharacter
+import logging
 
+from outlines import models
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from engine import Erin
 
 
 logging.basicConfig(
@@ -14,80 +13,25 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-def main():
+
+def main(model):
+    
+    
+    erin = Erin(model)
+
+    res = erin.prompt("Hi How are you Erin?")
+
+    print(res)
+
+if __name__ == "__main__":
+
     model_name = "Gigax/NPC-LLM-7B"
     llm = AutoModelForCausalLM.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
  
     model = models.Transformers(llm, tokenizer)
-
-    stepper = NPCStepper(model=model)
-
-
-    context = "Medieval world"
-    current_location = Location(name="Old Town", description="A quiet and peaceful town.")
-    locations = [current_location] # you can add more locations to the scene
-    NPCs = [
-        Character(
-        name="John the Brave",
-        description="A fearless warrior",
-        current_location=current_location,
-        )
-    ]
-    protagonist = ProtagonistCharacter(
-        name="Aldren",
-        description="Brave and curious",
-        current_location=current_location,
-        memories=["Saved the village", "Lost a friend"],
-        quests=["Find the ancient artifact", "Defeat the evil warlock"],
-        skills=[
-            Skill(
-                name="Attack",
-                description="Deliver a powerful blow",
-                parameter_types=[ParameterType.character],
-            )
-        ],
-        psychological_profile="Determined and compassionate",
-    )
-    items = [Item(name="Sword", description="A sharp blade")]
-    events = [
-        CharacterAction(
-            command="Say",
-            protagonist=protagonist.name,
-            parameters=[str(items[0]), "What a fine sword!"],
-        )
-    ]
-
-    action = stepper.get_action(
-        context=context,
-        locations=locations,
-        NPCs=NPCs,
-        protagonist=protagonist,
-        items=items,
-        events=events,
-    )
-    
-    logging.info(f"Aldren: {action}")
-
-    narrator = NarratorCharacter(name="Narrator", 
-                                 description="Act as a narrator for rpg.", 
-                                 skills=["guide player", "narrate scene", "can start quest"],
-                                 quests=["Find the ancient artifact", "Defeat the evil warlock"],
-                                 completedQuests=[])
-
-    narr = stepper.get_narrator_update(
-        context=context,
-        locations=locations,
-        NPCs=NPCs,
-        protagonist=protagonist,
-        items=items,
-        events=events,
-    )
-    logging.info(f"Narrator: {narr}")
+    main(model)
 
     del model
     del tokenizer
     torch.cuda.empty_cache()
-
-if __name__ == "__main__":
-    main()
