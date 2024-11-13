@@ -6,6 +6,8 @@ class GameStateManager:
     def __init__(self, initial_state):
         self.state = initial_state
         self.current_step = None
+        print("Available global classes:", globals().keys())
+
 
     def set_step(self, step):
         """
