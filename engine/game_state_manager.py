@@ -23,6 +23,7 @@ class GameStateManager:
         Execute the current step and transition to the next one.
         """
         while self.current_step:
+            print("executing: ", self.current_step)
             self.current_step.execute()
             next_step_class_name = self.current_step.next_step()
             if not next_step_class_name:
