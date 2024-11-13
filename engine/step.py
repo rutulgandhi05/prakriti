@@ -108,6 +108,11 @@ class NPCStepper:
         # Generate the response
         res = self._generate(prompt, guided_regex.pattern)
 
+        logger.info(
+            f" NPC {protagonist.name} responded: {res}"
+        )
+
+
         return self._parse_action(res, protagonist, guided_regex)
     
 
