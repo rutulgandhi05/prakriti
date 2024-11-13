@@ -27,19 +27,14 @@ class NPC(NPCStepper):
         super().__init__(model)
 
         self.events = []
-
-
-    def context(self):
-        pass
     
     def remember_interaction(self, event: CharacterAction):
         self.events.append(event)
 
     
-    def prompt(self, prompt):
+    def prompt(self, prompt, context, locations, NPCs, protagonist, items):
         self.remember_interaction(CharacterAction("say", "Lyra", [prompt]))
-
-        context, locations, NPCs, protagonist, items = self.context()
+        
         events = self.events
 
         res  = self.get_action(
@@ -57,10 +52,12 @@ class NPC(NPCStepper):
         return res
     
 
-class Erin(NPC):
+class Erin:
     def __init__(self, model):
-        super().__init__(model)
-        
+       self.model = model
+       self.stepper = NPC(model)
+
+       
     def context(self):
         context="Old village"
         locations=[Location("Entrance of village", "At the entrance of the village there is a gate which is a beautiful landmark."), 
@@ -83,6 +80,10 @@ class Erin(NPC):
         
         return context, locations, NPCs, protagonist, items
 
+    def prompt(self, prompt):
+        context, locations, NPCs, protagonist, items = self.context()
+        
+        return self.prompt(prompt, context, locations, NPCs, protagonist, items)
 
 
 class NARRATOR(NPCStepper):
