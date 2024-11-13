@@ -33,7 +33,8 @@ class Erin():
 
     
     def prompt(self, prompt):
-        self.remember_interaction(CharacterAction("say", "Lyra", [prompt]))
+        ch_prompt = CharacterAction("say", "Lyra", [prompt])
+        self.remember_interaction(ch_prompt)
 
         events = self.events
 
