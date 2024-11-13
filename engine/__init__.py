@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from engine.step import NPCStepper
 from engine.quest import Quest
-from engine.parse import CharacterAction, get_guided_regex
+from engine.parse import CharacterAction
 from engine.scene import Item, Character, Location, Skill, ProtagonistCharacter, NarratorCharacter, ParameterType
 
 model_name = "Gigax/NPC-LLM-7B"
@@ -56,18 +56,18 @@ class Erin():
 
     def context(self):
         context="Old village"
-        locations=[Location("Entrance of village", "At the entrance of the village there is a gate which is a beautiful landmark."), 
-                   Location("Dark Forest", "There is a dense forest on the west outskirts of the village."), 
-                   Location("Town House", "In the middle of the village there is a town house. It is often used for public gatherings.")]
-        NPCs=[Character("Lyra", "A herbelist. Well versed with ayurveda.", "Dark forest")]
+        locations=[Location(name="Entrance of village", description="At the entrance of the village there is a gate which is a beautiful landmark."), 
+                   Location(name="Dark Forest", description="There is a dense forest on the west outskirts of the village."), 
+                   Location(name="Town House", description="In the middle of the village there is a town house. It is often used for public gatherings.")]
+        NPCs=[Character(name="Lyra", description="A herbelist. Well versed with ayurveda.", current_location="Dark forest")]
        
         protagonist=ProtagonistCharacter(
             name= "Erin",
             description="Gaurd of the village. Brave and skilled in combat.",
-            current_location=Location("Entrance of village", "At the entrance of the village there is a gate which is a beautiful landmark."),
+            current_location=Location(name="Entrance of village", description="At the entrance of the village there is a gate which is a beautiful landmark."),
             memories=[],
-            quests= [Quest("Save village", "save the village from attackers and gaurd the main gate.", "Village")],
-            skills=[Skill(name="talk", description="Talk to anyone.", parameter_types=["character"])]
+            quests= [Quest(name="Save village", description="save the village from attackers and gaurd the main gate.", entity="Village")],
+            skills=[Skill(name="talk", description="Talk to anyone.", parameter_types=[ParameterType.character])]
         )
         
         
