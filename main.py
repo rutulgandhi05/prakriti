@@ -1,37 +1,18 @@
-import torch
-import logging
+# main.py
 
-from outlines import models
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-from engine import Erin
-
-
-logging.basicConfig(
-    filename="game_logs.txt",
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-
-def main(model):
-    
-    
-    erin = Erin(model)
-
-    res = erin.prompt("Hi Erin! Will you go out on lunch with me?")
-
-    print(res)
+from engine.game_state_manager import GameStateManager
+from engine.scene_step import SceneStep
+from engine.dialogue_step import DialogueStep
 
 if __name__ == "__main__":
+    # Initial game state
+    game_state = {}
 
-    model_name = "Gigax/NPC-LLM-7B"
-    llm = AutoModelForCausalLM.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
- 
-    model = models.Transformers(llm, tokenizer)
-    main(model)
+    # Create the state manager
+    manager = GameStateManager(initial_state=game_state)
 
-    del model
-    del tokenizer
-    torch.cuda.empty_cache()
+    # Start with the SceneStep
+    manager.set_step(SceneStep(game_state))
+    manager.run()
+
+    print("\nGame Over!")
