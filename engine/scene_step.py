@@ -2,21 +2,26 @@ from engine.step import Step
 import random
 
 class SceneStep(Step):
-    """
-    Handles the logic for generating and managing dynamic scenes.
-    """
+    def __init__(self, game_state, llm_engine):
+        super().__init__(game_state)
+        self.llm_engine = llm_engine
 
     def execute(self):
         """
-        Generate a new scene and update the game state.
+        Generate a new scene using the LLM and update the game state.
         """
         environment, mood, npc, event = self.generate_scene_components()
-        self.game_state["current_scene"] = {
-            "description": f"A {mood} {environment} where {event}. You encounter {npc}.",
-            "npc": npc,
-        }
+        scene_data = self.llm_engine.generate_scene_description(environment, mood, npc, event)
+
+        if "error" in scene_data:
+            print("Error generating scene:", scene_data["error"])
+            print("Raw response:", scene_data["raw_response"])
+            return
+
+        self.game_state["current_scene"] = scene_data
         print("\nScene:")
-        print(self.game_state["current_scene"]["description"])
+        print(scene_data["description"])
+
 
     def next_step(self):
         """
@@ -26,8 +31,9 @@ class SceneStep(Step):
 
     def generate_scene_components(self):
         """
-        Generate random components for the scene.
+        Provide random components for the scene.
         """
+        import random
         environments = ["forest", "mountain", "riverbank", "cave", "ruins"]
         moods = ["eerie", "calm", "mystical", "desolate"]
         npcs = ["a trader", "a guardian", "a hermit", "a traveler"]

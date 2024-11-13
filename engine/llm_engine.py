@@ -1,18 +1,19 @@
-# engine/llm_engine.py
-
+from outlines import models, generate
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from outlines.models.transformers import GenerationParameters
 
 class LLMEngine:
     """
     Handles LLM interactions for generating dynamic text.
     """
 
-    def __init__(self, model_name="mistralai/Mistral-7B-v0.1"):
+    def __init__(self, model_name="Gigax/NPC-LLM-7B"):
         """
         Initialize the LLM engine with the chosen model.
         """
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        self.llm = AutoModelForCausalLM.from_pretrained(model_name)
+        self.model = models.Transformers(self.llm , self.tokenizer)
 
     def generate_text(self, prompt, max_length=150):
         """
@@ -24,29 +25,33 @@ class LLMEngine:
         Returns:
             str: Generated text.
         """
-        inputs = self.tokenizer(prompt, return_tensors="pt")
-        outputs = self.model.generate(inputs["input_ids"], max_length=max_length)
-        return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        gen_params = GenerationParameters(max_tokens=max_length)
+
+        # Generate text using the model and generation parameters
+        generated_text = self.model.generate(prompt, generation_parameters=gen_params)
+
+        return generated_text
 
     def generate_scene_description(self, environment, mood, npc, event):
         """
-        Generate a dynamic scene description based on parameters.
-        Args:
-            environment (str): The setting of the scene.
-            mood (str): The atmosphere of the scene.
-            npc (str): The NPC present in the scene.
-            event (str): A key event in the scene.
-
-        Returns:
-            dict: Structured scene details.
+        Generate a dynamic scene description using regex for structured output.
         """
+        # Define the regex pattern for a structured scene
+        scene_regex = r"\{\s*\"description\":\s*\".*?\",\s*\"environment\":\s*\".*?\",\s*\"mood\":\s*\".*?\",\s*\"npc\":\s*\".*?\",\s*\"event\":\s*\".*?\"\s*\}"
+
+        # Create the generator with regex constraints
+        generator = generate.regex(self.model, scene_regex)
+
+        # Create the prompt
         prompt = (
             f"Describe a fantasy scene with an environment: {environment}, mood: {mood}, "
             f"and an NPC named {npc}. Include an event where {event}. "
-            "Provide a structured output as JSON with keys: description, environment, mood, npc, event."
+            "Provide a structured JSON output."
         )
-        response = self.generate_text(prompt)
-        return self.parse_response(response)
+
+        # Generate the output
+        output = generator(prompt)
+        return output
 
     def generate_npc_response(self, player_input, scene_description, npc):
         """
