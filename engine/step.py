@@ -4,7 +4,7 @@ import logging
 import traceback
 
 from typing import Callable
-from engine.prompt import NPCPrompt, llama_chat_template, NarratorPrompt, NarratorPromptQuestGenerate, NarratorPromptQuestComplete
+from engine.prompt import NPCPrompt, NPCPromptBase, llama_chat_template, NarratorPrompt, NarratorPromptQuestGenerate, NarratorPromptQuestComplete
 from engine.scene import Character, Item, Location, NarratorCharacter, Skill
 from dotenv import load_dotenv
 from outlines import models
@@ -91,7 +91,7 @@ class NPCStepper:
         Prompt the NPC for an input.
         """
 
-        prompt = NPCPrompt(
+        prompt = NPCPromptBase(
             context=context,
             locations=locations,
             NPCs=NPCs,
