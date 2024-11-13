@@ -22,9 +22,9 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = models.Transformers(llm, tokenizer)
 
 
-class NPC(NPCStepper):
+class Erin():
     def __init__(self, model):
-        super().__init__(model)
+        self.stepper = NPCStepper(model)
 
         self.events = []
     
@@ -32,12 +32,14 @@ class NPC(NPCStepper):
         self.events.append(event)
 
     
-    def prompt(self, prompt, context, locations, NPCs, protagonist, items):
+    def prompt(self, prompt):
         self.remember_interaction(CharacterAction("say", "Lyra", [prompt]))
-        
+
         events = self.events
 
-        res  = self.get_action(
+        context, locations, NPCs, protagonist, items = self.context()
+        
+        res  = self.stepper.get_action(
             context=context,
             locations=locations,
             NPCs=NPCs,
@@ -50,14 +52,7 @@ class NPC(NPCStepper):
             self.remember_interaction(res)
 
         return res
-    
 
-class Erin:
-    def __init__(self, model):
-       self.model = model
-       self.stepper = NPC(model)
-
-       
     def context(self):
         context="Old village"
         locations=[Location("Entrance of village", "At the entrance of the village there is a gate which is a beautiful landmark."), 
@@ -68,7 +63,7 @@ class Erin:
         protagonist=ProtagonistCharacter(
             name= "Erin",
             description="Gaurd of the village. Brave and skilled in combat.",
-            current_location="Entrance of the village.",
+            current_location=Location("Entrance of village", "At the entrance of the village there is a gate which is a beautiful landmark."),
             memories=[],
             quests= [Quest("Save village", "save the village from attackers and gaurd the main gate.", "Village")],
             skills=[Skill(name="talk", description="Talk to anyone.", parameter_types=["character"])]
@@ -79,11 +74,10 @@ class Erin:
         self.events = [CharacterAction("walk", protagonist.name, ["towards gate"] )]
         
         return context, locations, NPCs, protagonist, items
+       
+    
 
-    def prompt(self, prompt):
-        context, locations, NPCs, protagonist, items = self.context()
-        
-        return self.prompt(prompt, context, locations, NPCs, protagonist, items)
+
 
 
 class NARRATOR(NPCStepper):

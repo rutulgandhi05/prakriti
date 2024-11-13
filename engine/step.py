@@ -13,7 +13,7 @@ from engine.parse import CharacterAction, ProtagonistCharacter, get_guided_regex
 
 load_dotenv()
 
-logger = logging.getLogger("step")
+logger = logging.getLogger("uni")
 
 
 class NPCStepper:
