@@ -12,6 +12,6 @@ if __name__ == "__main__":
     }
 
     llm_engine = LLMEngine()
-    manager = GameStateManager(initial_state=game_state)
+    manager = GameStateManager(initial_state=game_state, llm_engine)
     manager.set_step(SceneStep(game_state, llm_engine))
     manager.run()
