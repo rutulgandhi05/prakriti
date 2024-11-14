@@ -14,96 +14,40 @@ class DBManager:
     def close(self):
         """Close the Neo4j database connection."""
         self.driver.close()
-
+        
     def get_scene_by_id(self, scene_id):
-        logging.info(f"Fetching scene with ID: {scene_id}")
-        logging.info(f"Getting next scenes for current scene ID: {scene_id}")
         with self.driver.session() as session:
             result = session.run(
-                """
-                MATCH (s:Scene {id: $scene_id})
-                OPTIONAL MATCH (s)-[:INCLUDES]->(npc:NPC)
-                RETURN s.description AS description, collect(npc.name) AS npcs
-                """,
+                "MATCH (s:Scene {id: $scene_id}) RETURN s.description AS description, s.npc AS npc",
                 scene_id=scene_id
             )
             record = result.single()
-            if record:
-                return record
-        
+            return (record["description"], record["npc"]) if record else None
 
-    def get_next_scene_options(self, current_scene_id):
-   
+    
+    def create_scene_and_npc_data(self):
+        with self.driver.session() as session:
+            session.run(
+                """
+                MERGE (scene1:Scene {id: 1, description: "A mystical forest.", npc: "Eldara"})
+                MERGE (scene2:Scene {id: 2, description: "An ancient ruins.", npc: "Guardian"})
+                MERGE (scene1)-[:LEADS_TO]->(scene2)
+                """
+            )
+
+    def get_next_scene(self, current_scene_id):
         with self.driver.session() as session:
             result = session.run(
-                """
-                MATCH (s:Scene {id: $current_scene_id})-[:LEADS_TO]->(next:Scene)
-                RETURN next.id AS id, next.description AS description
-                """,
+                "MATCH (s:Scene {id: $current_scene_id})-[:LEADS_TO]->(next:Scene) RETURN next.id AS id",
                 current_scene_id=current_scene_id
             )
-            return [{"id": record["id"], "description": record["description"]} for record in result]
+            record = result.single()
+            return record["id"] if record else None
+        
 
-    def create_scene_and_npc_data(self):
-        """
-        Create initial scene and NPC nodes, along with their relationships, in the database
-        if they do not already exist.
-        """
-        with self.driver.session() as session:
-            # Create or ensure Scene nodes exist
-            session.run(
-                """
-                MERGE (s1:Scene {id: 1})
-                ON CREATE SET s1.description = "You stand at the edge of a dense forest, with mist drifting between the trees."
-                
-                MERGE (s2:Scene {id: 2})
-                ON CREATE SET s2.description = "A hidden grove filled with vibrant flowers and a calm, crystal-clear pond."
-                
-                MERGE (s3:Scene {id: 3})
-                ON CREATE SET s3.description = "An old, abandoned camp lies here, with a burnt-out fire pit and scattered belongings."
-                
-                MERGE (s4:Scene {id: 4})
-                ON CREATE SET s4.description = "You arrive at ancient ruins, with towering stone pillars and intricate carvings on the walls."
-                """
-            )
-            
-            # Create or ensure NPC nodes exist
-            session.run(
-                """
-                MERGE (npc1:NPC {name: "Forest Guardian"})
-                ON CREATE SET npc1.description = "A mysterious figure who protects the forest."
-                
-                MERGE (npc2:NPC {name: "Old Traveler"})
-                ON CREATE SET npc2.description = "A wise traveler with stories of distant lands."
-                
-                MERGE (npc3:NPC {name: "Stone Guardian"})
-                ON CREATE SET npc3.description = "An ancient guardian that awakens only for the worthy."
-                """
-            )
-            
-            # Create relationships between scenes and NPCs if they don't exist
-            session.run(
-                """
-                MATCH (s1:Scene {id: 1}), (npc1:NPC {name: "Forest Guardian"})
-                MERGE (s1)-[:INCLUDES]->(npc1)
-                
-                MATCH (s2:Scene {id: 2}), (npc2:NPC {name: "Old Traveler"})
-                MERGE (s2)-[:INCLUDES]->(npc2)
-                
-                MATCH (s4:Scene {id: 4}), (npc3:NPC {name: "Stone Guardian"})
-                MERGE (s4)-[:INCLUDES]->(npc3)
-                """
-            )
-            
-            # Create scene transitions only if they don't already exist
-            session.run(
-                """
-                MATCH (s1:Scene {id: 1}), (s2:Scene {id: 2}), (s3:Scene {id: 3}), (s4:Scene {id: 4})
-                MERGE (s1)-[:LEADS_TO]->(s2)
-                MERGE (s1)-[:LEADS_TO]->(s3)
-                MERGE (s2)-[:LEADS_TO]->(s4)
-                MERGE (s3)-[:LEADS_TO]->(s4)
-                """
-            )
-            print("Scene, NPC, and relationship data created successfully (if not already existing).")
-
+if __name__ == "__main__":
+    db_manager = DBManager()
+    db_manager.create_scene_and_npc_data()
+    print(db_manager.get_scene_by_id(1))
+    print(db_manager.get_next_scene(1))
+    db_manager.close()
