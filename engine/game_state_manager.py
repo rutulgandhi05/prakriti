@@ -1,4 +1,5 @@
 from engine.dialogue_step import DialogueStep
+from engine.scene_step import SceneStep
 from llm_engine import LLMEngine
 
 class GameStateManager:
@@ -20,9 +21,9 @@ class GameStateManager:
                 if next_step_name == "DialogueStep":
                     print(" state", self.state)
                     print(type(self.state))
-                    self.current_step = step_class(self.state, self.llm_engine)
+                    self.current_step = DialogueStep(self.state, self.llm_engine)
                 elif next_step_name == "SceneStep":
-                    self.current_step = step_class(self.state, self.llm_engine)
+                    self.current_step = SceneStep(self.state, self.llm_engine)
                 else:
                     self.current_step = step_class(self.state, self.llm_engine)
             else:
