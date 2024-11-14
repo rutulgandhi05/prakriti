@@ -14,6 +14,12 @@ class GameStateManager:
             next_step_name = self.current_step.next_step()
             if next_step_name:
                 step_class = globals()[next_step_name]
-                self.current_step = step_class(self.state)
+                # Pass the required llm_engine when initializing the next step
+                if next_step_name == "DialogueStep":
+                    self.current_step = step_class(self.state, self.llm_engine)
+                elif next_step_name == "SceneStep":
+                    self.current_step = step_class(self.state, self.llm_engine)
+                else:
+                    self.current_step = step_class(self.state)
             else:
                 self.current_step = None
