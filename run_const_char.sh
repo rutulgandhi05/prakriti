@@ -5,5 +5,5 @@
 #python consistent_character/exam_inference.py
 
 
-python engine/llm_engine.py
-#python main.py
+#python engine/llm_engine.py
+python main.py
