@@ -17,3 +17,6 @@ xformers==0.0.22
 git+https://github.com/huggingface/datasets.git
 diffusers==0.23.1
 imageio==2.36.0
+seaborn
+tabulate
+facenet-pytorch

@@ -17,9 +17,7 @@ class Teacher:
 
         # INPUT images
         self.imgs_path=os.path.join(self.args.train_data_dir, self.args.character_name, "0")
-        self.imgs_wh=(1024,1024) # 25 min for 500 steps (3090TI) -> noisy when used with lower INPUT image resolution
-        #imgs_wh=(768,768) # 15 min for 500 steps (3090TI) -> good results
-        #imgs_wh=(512,512) # 10 min for 500 steps (3090TI) -> fastest
+        self.imgs_wh=(1024,1024) 
         self.imgs_flip=True # additionally use horizontally mirrored INPUT images
 
         self.learn_token=self.args.placeholder_token

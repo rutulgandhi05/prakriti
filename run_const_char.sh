@@ -2,8 +2,8 @@
 #python consistent_character/the_chosen_one.py
 #python consistent_character/inference.py
 #python consistent_character/character_teacher.py
-#python consistent_character/exam_inference.py
+python consistent_character/exam_inference.py
 
 
 #python engine/llm_engine.py
-python main.py
+#python main.py

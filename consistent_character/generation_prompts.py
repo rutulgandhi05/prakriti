@@ -199,5 +199,4 @@ prompts = [
     "{} building a model airplane indoors, cozy lighting, close-up, with tools and parts on the table.",
     "{} practicing ballet in a studio, bright indoor light, medium shot, with mirrors and barre in the background.",
     "{} painting a scenic landscape outdoors, sunlight casting a warm glow, medium shot, with mountains visible in the distance."
-
 ]

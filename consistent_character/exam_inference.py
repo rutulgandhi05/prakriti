@@ -196,5 +196,5 @@ if __name__ == "__main__":
             
         inference(args=args, prompt_postfix=prompt_postfix) """
     
-    for prompt in prompts[50:]:
+    for prompt in prompts:
         training_images(args=args, prompt=prompt)
