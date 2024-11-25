@@ -24,7 +24,7 @@ seed: 45
 character_name: 3r1n
 output_dir: data/3r1n_mod1/experiments
 train_data_dir: data/3r1n_mod1/loop_images
-backup_data_dir_root: data/3r1n_final  # Your dataset backup folder
+backup_data_dir_root: data/3r1n_final_simple  # Your dataset backup folder
 # lora_ckpt_dir: checkpoint-1200
 max_train_steps: 500
 num_of_generated_img: 201

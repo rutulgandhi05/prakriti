@@ -9,7 +9,7 @@ import torchvision.transforms as T
 from tqdm import auto
 from PIL import Image,ImageEnhance
 from diffusers import DiffusionPipeline,DDIMScheduler,DDPMScheduler
-from generation_prompts import prompts
+from generation_prompts import prompts, simple_prompts
 
 
 def config_2_args(path):
@@ -196,5 +196,5 @@ if __name__ == "__main__":
             
         inference(args=args, prompt_postfix=prompt_postfix) """
     
-    for prompt in prompts:
+    for prompt in simple_prompts:
         training_images(args=args, prompt=prompt)
